@@ -3,6 +3,8 @@ dist/
 .astro/
 pnpm-debug.log*
 .DS_Store
-docs/
+docs/*
+!docs/content-governance.md
+!docs/AGENT_HANDOVER.md
 .pi-subagents/
 artifacts/
