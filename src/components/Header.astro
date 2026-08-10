@@ -1,0 +1,33 @@
+---
+import ScrollProgress from './ScrollProgress.astro';
+import ThemeToggle from './ThemeToggle.astro';
+import { siteOwner } from '../site';
+
+const navItems = [
+  { href: '/', label: 'Home' },
+  { href: '/work', label: 'Work' },
+  { href: '/writing', label: 'Writing' },
+  { href: '/resume', label: 'Resume' },
+];
+
+const currentPath = Astro.url.pathname;
+---
+
+<header class="site-header" data-site-header>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <div class="site-header__inner" data-site-header-content>
+    <a href="/" class="site-identity">
+      <span class="site-monogram" aria-hidden="true">KSM</span>
+      <strong class="site-name">{siteOwner}</strong>
+    </a>
+    <nav aria-label="Primary" class="site-nav">
+      {navItems.map((item) => (
+        <a href={item.href} aria-current={currentPath === item.href ? 'page' : undefined}>
+          {item.label}
+        </a>
+      ))}
+    </nav>
+    <ThemeToggle />
+  </div>
+  <ScrollProgress />
+</header>

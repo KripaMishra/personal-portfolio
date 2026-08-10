@@ -1,0 +1,24 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { formatDate } from '../lib/content';
+
+interface Props {
+  article: CollectionEntry<'articles'>;
+}
+
+const { article } = Astro.props;
+const detailHref = `/writing/${article.slug}`;
+---
+
+<a class="article-card" href={detailHref} aria-label={`Read ${article.data.title}`}>
+  <p class="article-card__meta meta">
+    <span>{formatDate(article.data.publishedAt)}</span>
+    <span>{article.data.topics[0] ?? 'Writing'}</span>
+    {article.data.reviewLabel && <span>{article.data.reviewLabel}</span>}
+  </p>
+  <div class="article-card__copy">
+    <h3>{article.data.title}</h3>
+    <p>{article.data.deck ?? article.data.summary}</p>
+  </div>
+  <span class="article-card__action" aria-hidden="true">Read →</span>
+</a>

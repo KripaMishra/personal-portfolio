@@ -1,0 +1,51 @@
+:root {
+  color-scheme: light;
+  --color-bg: #f4f1e9;
+  --color-surface: #ebe7dc;
+  --color-surface-strong: #fffdf7;
+  --color-text: #182126;
+  --color-text-muted: #5d615c;
+  --color-border: #c9c2b4;
+  --color-border-strong: #817b70;
+  --color-accent: #9b3f31;
+  --color-accent-strong: #1e6383;
+  --color-success: #356047;
+  --color-warning: #8a4d00;
+  --color-shadow: rgb(24 33 38 / 0.12);
+  --font-display: 'Newsreader', Georgia, serif;
+  --font-sans: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  --max-width: 88rem;
+  --measure: 68ch;
+  --rail-width: 18rem;
+  --header-height: 5.25rem;
+  --radius-sm: 0.15rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.35rem;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 5rem;
+  --space-9: 7rem;
+  --transition-base: 160ms ease;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-bg: #111517;
+  --color-surface: #1b2225;
+  --color-surface-strong: #232c30;
+  --color-text: #eeebe3;
+  --color-text-muted: #b8b2a6;
+  --color-border: #394144;
+  --color-border-strong: #7a817d;
+  --color-accent: #e67f68;
+  --color-accent-strong: #79b7d3;
+  --color-success: #7bb28a;
+  --color-warning: #e1ad66;
+  --color-shadow: rgb(0 0 0 / 0.36);
+}

@@ -1,0 +1,12 @@
+---
+import progressScriptUrl from '../scripts/scroll-progress.ts?url';
+---
+
+<div class="scroll-progress-shell" role="group" aria-label="Page progress" data-scroll-progress-shell>
+  <div aria-hidden="true" class="progress-bar" data-scroll-progress></div>
+  <p class="progress-status" data-scroll-progress-status>
+    <span class="progress-status__label" data-scroll-progress-section>Top of page</span>
+    <span class="progress-status__value" data-scroll-progress-value>0%</span>
+  </p>
+</div>
+<script is:inline type="module" src={progressScriptUrl}></script>

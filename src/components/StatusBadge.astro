@@ -1,0 +1,16 @@
+---
+interface Props {
+  lifecycle: 'in-development' | 'iterating' | 'complete' | 'archived';
+}
+
+const { lifecycle } = Astro.props;
+
+const labels = {
+  'in-development': 'In development',
+  iterating: 'Iterating',
+  complete: 'Complete',
+  archived: 'Archived',
+};
+---
+
+<span class="status-badge" data-status={lifecycle}>{labels[lifecycle]}</span>

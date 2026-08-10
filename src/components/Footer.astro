@@ -1,0 +1,18 @@
+---
+import { siteContact, siteLinks, siteOwner } from '../site';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <p><strong>{siteOwner}</strong><br /><span class="muted">Systems, evidence, boundaries.</span></p>
+    <ul class="inline-list" aria-label="External links">
+      <li><a href={siteLinks.github} rel="noreferrer" target="_blank">GitHub ↗</a></li>
+      <li><a href={siteLinks.linkedin} rel="noreferrer" target="_blank">LinkedIn ↗</a></li>
+      <li><a href="/about">About</a></li>
+      <li><a href="/now">Now</a></li>
+    </ul>
+    <p class="muted">© {year} · {siteContact.label}<br />Unapproved writing stays out of production.</p>
+  </div>
+</footer>

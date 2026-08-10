@@ -1,0 +1,8 @@
+---
+import themeScriptUrl from '../scripts/theme.ts?url';
+---
+
+<button class="theme-toggle" data-theme-toggle type="button" aria-label="Toggle theme">
+  <span data-theme-toggle-label>Light</span>
+</button>
+<script is:inline type="module" src={themeScriptUrl}></script>
