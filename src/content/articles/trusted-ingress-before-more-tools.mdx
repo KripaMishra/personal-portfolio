@@ -1,0 +1,94 @@
+---
+title: Trusted ingress before more tools
+summary: Career Copilot shows why tight trust boundaries matter more than expanding the tool list too early.
+deck: Career Copilot shows why a single-owner agent benefits from tight trust boundaries before it grows new capabilities.
+visibility: public
+publicationStatus: review-draft
+reviewLabel: review-draft
+publishedAt: 2026-08-10
+topics:
+  - agent-systems
+  - trust-boundaries
+  - local-first
+relatedProjects:
+  - career-copilot
+evidenceLinks:
+  - label: Career Copilot README
+    url: https://raw.githubusercontent.com/KripaMishra/career-copilot/master/README.md
+    kind: docs
+sourceEvidenceNotes:
+  - "Public README: https://raw.githubusercontent.com/KripaMishra/career-copilot/master/README.md"
+disclosureCaveats:
+  - Keep wording aligned to the public README's implemented and not-implemented lists.
+  - Do not imply multi-user support, distributed workers, browser-assisted applications, or file ingestion.
+  - Avoid screenshots or examples containing real resumes, chats, reports, Google Sheets rows, or identifiers.
+---
+
+## Why this draft exists
+
+A lot of agent writeups jump straight to autonomy: more tools, more channels, more memory, more automation. The public Career Copilot README suggests a different priority. It describes a local-first, single-owner assistant with one narrow end-to-end flow: take a supported job URL, fetch it through a bounded pipeline, analyze it, write a private Markdown report row, verify a Google Sheets update, and send a completion notification. That scope is interesting not because it is broad, but because it is deliberately constrained.
+
+The technical lesson is simple: if an agent can touch private context or write to durable systems, the trust boundary matters more than the surface area of the tool list.
+
+## What the public repository actually proves
+
+The README is explicit about current scope. Implemented today: one owner, one registered Mastra agent, Telegram private-chat ingress with allowlists, a guided onboarding path, owner- and conversation-scoped memory, one libSQL backend, synchronous save execution, an explicit job-site allowlist, SSRF/redirect/content-type/timeout/response-size controls, structured model analysis, owner-scoped Markdown reports, read-after-write-verified Google Sheets updates, startup recovery, and redacted traces.
+
+Just as important, the same document lists what is not implemented: resume file ingestion, job discovery, scheduling, CSV import, browser-assisted applications, automatic applications, multiple owners, distributed coordination, background workers, public API adapters, and automated backup/export/retention. That negative space is part of the architecture. It tells readers where the author stopped on purpose.
+
+For a portfolio article, that matters because it turns the project into a concrete engineering argument instead of a vague "AI assistant" claim.
+
+## The key pattern: server-created trusted context
+
+One of the strongest ideas in the README is the insistence that career tools do not depend directly on Telegram identifiers or client-supplied payloads. Instead, they require a server-created `RequestContext` containing owner, actor, conversation, request, optional resume-job identity, and a process-local capability. The README is explicit that these fields should never be accepted from an untrusted client payload.
+
+That is a useful pattern outside this specific project.
+
+When an agent can fetch a URL, read profile context, write a report, or update a spreadsheet, the dangerous failure mode is not only "bad model output." It is also context confusion: a tool being invoked with the wrong owner, the wrong conversation, or a forged request identity. The Career Copilot design narrows that risk by making trust establishment an ingress responsibility rather than a tool responsibility.
+
+In practice, that means the adapter has to do real work before the model sees anything meaningful:
+
+- authenticate the caller
+- authorize the owner and conversation
+- derive a stable request ID
+- create trusted server-side context
+- invoke the agent with scoped memory and that context
+
+This is less glamorous than adding another model or workflow, but it is the kind of systems decision that makes later expansion safer.
+
+## Guardrails are part of the product, not an afterthought
+
+The save path in the public README is narrow by design. It uses HTTPS-only acquisition from an explicit allowlist, then adds SSRF, redirect, content-type, timeout, and response-size controls before analysis. Those details matter because they show the fetch layer is treated as a hostile boundary, not a convenience helper.
+
+That framing is worth carrying into the article draft. A user-facing agent often looks like one smooth experience, but the safe implementation is usually a chain of separate permission checks and bounded transforms. Career Copilot's public architecture reads less like "let the model browse" and more like "admit only a small set of trusted inputs, then process them with narrow contracts."
+
+That is also why the repository's limitations are reassuring. The README does not pretend the current save path is a distributed queue, and it does not overstate browser or file-handling support. The architecture stays credible because it names the missing pieces.
+
+## Why the single-owner constraint is a feature here
+
+The README repeatedly scopes the system to one owner. In many portfolio writeups that might sound like a limitation to hide. Here it is better understood as a design choice that simplifies identity, memory, and persistence.
+
+A single-owner system can keep:
+
+- one clear trust anchor for profile memory
+- one bounded report destination
+- one conversational context model
+- one simpler authorization story
+
+That does not make it trivial, but it does make the architecture more legible. For an early product slice, that tradeoff is often the difference between a reliable narrow workflow and a sprawling system with ambiguous responsibility boundaries.
+
+## What this article should not overclaim
+
+This draft should stay disciplined.
+
+It should not imply that the project already supports multi-user deployment, background orchestration, or browser-assisted applications. It should not imply the model has broad autonomous freedom. It should not claim measured outcome improvements, scale, or production adoption from the public sources alone.
+
+A better framing is: this project is a useful example of how to treat ingress, authorization, scoped memory, and durable writes as first-class engineering problems in an agent workflow.
+
+## Why this belongs in the portfolio
+
+The portfolio spec emphasizes evidence, explicit boundaries, and readable technical depth. This draft supports that direction because it turns a public README into a concrete architectural lesson:
+
+Before expanding what an agent can do, make the trust boundary explicit.
+
+That is a more durable engineering insight than a feature tour. It also pairs well with a future case study, where the project page can cover the broader system while this article focuses on one narrow lesson: trusted ingress is part of the product surface.

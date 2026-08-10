@@ -1,0 +1,114 @@
+---
+title: Separate the product surface from the benchmark harness
+summary: DocNeedle is more credible because it separates normal CLI use from repo-specific evaluation infrastructure.
+deck: DocNeedle's README is persuasive because it treats normal CLI use and repo-specific evaluation as different things instead of collapsing them into one story.
+visibility: public
+publicationStatus: review-draft
+reviewLabel: review-draft
+publishedAt: 2026-08-10
+topics:
+  - developer-tools
+  - retrieval
+  - sqlite
+  - fts5
+relatedProjects:
+  - docneedle
+evidenceLinks:
+  - label: DocNeedle README
+    url: https://raw.githubusercontent.com/KripaMishra/doc-needle/main/README.md
+    kind: docs
+  - label: DocNeedle tags API
+    url: https://api.github.com/repos/KripaMishra/doc-needle/tags
+    kind: release
+sourceEvidenceNotes:
+  - "Public README: https://raw.githubusercontent.com/KripaMishra/doc-needle/main/README.md"
+  - "Public tags API: https://api.github.com/repos/KripaMishra/doc-needle/tags"
+disclosureCaveats:
+  - Do not publish benchmark numbers unless linked public reports are added.
+  - Keep the article scoped to the documented CLI and README-stated limitations.
+  - Do not imply portable benchmarking or patch-application support beyond what the README says.
+---
+
+## A small line in the README that does a lot of work
+
+The most important sentence in the public DocNeedle README may be the warning near the top: the repository has two separate modes of use, normal CLI usage and benchmark usage, and they should not be mixed.
+
+That is a small editorial choice with a large technical payoff.
+
+A lot of tool repositories blur those lines. They show a benchmark harness, a product surface, and a few half-exposed internals in one undifferentiated narrative. DocNeedle does the opposite. It says the main product surface is a local CLI for indexing markdown, searching it, reading chunks, and checking stale or conflicting terminology. Then it says the benchmark scripts are repo-specific evaluation harnesses, not the normal way to use the tool.
+
+That separation is worth writing about because it makes the project more credible.
+
+## What the public product surface is
+
+The README describes a local-first deterministic prototype using SQLite FTS5. The normal CLI surface has four commands:
+
+- `index` to parse markdown and write chunk/file metadata into SQLite
+- `search` to retrieve ranked chunk candidates for a query
+- `read` to fetch one chunk payload by `chunk_id`
+- `check` to scan for stale or conflicting phrases for a topic
+
+The examples stay concrete. They show a markdown corpus root, a local SQLite database path, incremental refresh with `--changed-only`, and JSON output. The documented workflow is not abstract retrieval theory; it is a practical loop for maintaining and querying a documentation corpus.
+
+There is a second useful detail here: the README says no LLM or remote API is used for indexing or retrieval in the current MVP slice. That sharpens the article angle. This is not a "RAG platform" trying to do everything. It is a focused local documentation tool with deterministic primitives.
+
+## Why the benchmark split matters
+
+The benchmark section is valuable precisely because it is not oversold.
+
+The README says the scripts under `benchmarks/` are not generic. It names the hardcoded assumptions directly: docs roots, expected repo/worktree locations, temp database paths, report output paths, and task JSON locations. It even tells readers to patch those constants near the top of each script before using them elsewhere.
+
+That kind of candor is rare, and it changes how the rest of the repository reads.
+
+Instead of pretending the evaluation harness is a polished end-user feature, the project treats it as what it currently is: author-environment-oriented infrastructure for regression checking and comparison against `rg` baselines. That makes the benchmark evidence easier to trust later, because the project is not trying to smuggle local experimentation into the product story.
+
+## Local-first tooling benefits from explicit boundaries
+
+There is a deeper lesson here for developer tools.
+
+Local-first systems often combine three very different concerns:
+
+- the workflow a user should run every day
+- the internal machinery used to evaluate changes
+- the experimental code that may become productized later
+
+If those concerns are mixed together, the user has to guess which commands are stable, which paths are machine-specific, and which outputs are publishable evidence. DocNeedle's README reduces that ambiguity by drawing a clean line between day-to-day CLI use and repo-specific benchmarking.
+
+That also makes the MVP limitations easier to discuss honestly. The same public source says patch mechanics are scaffolded but not exposed as a CLI command in the current slice, and that benchmark scripts still need cleanup before they become portable. Readers do not have to reverse-engineer maturity from the repo tree; the README tells them.
+
+## Why SQLite FTS5 is a strong framing device
+
+The project's technical framing stays grounded because it keeps returning to a small set of concrete primitives: markdown input, SQLite storage, FTS5-backed retrieval, chunk reads, and stale-term checks.
+
+That is enough to support a useful article theme: retrieval quality is only one part of documentation tooling. Another part is keeping terminology consistent as docs evolve. The `check` command is especially interesting because it makes stale or conflicting language part of the tool surface rather than an afterthought.
+
+Even without public benchmark numbers, the documented CLI already suggests a coherent story:
+
+- index the corpus locally
+- retrieve candidate chunks quickly
+- inspect a concrete chunk
+- audit terminology drift
+
+That is a stronger portfolio narrative than a vague claim about "AI-powered documentation search."
+
+## Version evidence helps, but only when it stays narrow
+
+The public tags API shows a `v0.2.0` tag, and the portfolio audit uses that as evidence for a versioned badge. That is enough to support language like "versioned experimental tool" or "iterating CLI prototype."
+
+It is not enough to support benchmark claims by itself.
+
+That distinction matters. A good portfolio article can say the project has a public version marker and a documented evaluation harness while still refusing to publish performance numbers until the corresponding reports are public and attributable.
+
+## What this article should not overclaim
+
+This draft should not imply that the benchmark scripts are portable out of the box, that patching is already a public CLI feature, or that retrieval performance has been proven by linked public reports. It should also avoid inflating the product into a generalized platform when the README describes a more focused documentation workflow.
+
+The public evidence is strongest when the article stays close to the documented CLI.
+
+## Why this belongs in the portfolio
+
+The portfolio specification asks for evidence-backed technical writing instead of sample-topic filler. DocNeedle is the cleanest public source package in the current audit, and it supports a real engineering argument:
+
+If you want users to trust a tool, separate the stable product surface from the private evaluation harness.
+
+That is useful advice for developer-tool authors in general, and it emerges directly from the way the public README is written.

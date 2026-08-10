@@ -1,0 +1,94 @@
+---
+title: Career Copilot
+summary: Local-first career assistant for structured job review and guided onboarding.
+visibility: public
+featured: true
+order: 1
+lifecycle: in-development
+stateSince: 2026-08-10
+currentState: Public repository documents a bounded /save flow, guided onboarding, trusted request context, and owner-scoped persistence. Multi-user and browser-assisted expansion remain intentionally out of scope.
+problem: Career review workflows touch private context, durable stores, and external URLs. The public architecture has to prove those boundaries before it claims broader autonomy.
+constraints:
+  - Keep every public claim aligned to the README's implemented and not-implemented lists.
+  - Do not expose real resumes, chats, Google Sheets rows, or identifiers.
+  - Avoid implying multi-user support, file ingestion, scheduling, or browser-assisted applications.
+approach:
+  - Establish trusted server-side request context before any agent tool can act.
+  - Bound ingress to supported HTTPS job URLs with SSRF, redirect, content-type, timeout, and size controls.
+  - Keep persistence owner-scoped with verified Markdown report writes and read-after-write Google Sheets updates.
+outcomes:
+  - Credible public case study for trust-boundary design in a single-owner agent workflow.
+  - Evidence-backed writing lane anchored to ingress, authorization, and bounded durable writes.
+domains:
+  - agent-systems
+  - trust-boundaries
+  - workflow-automation
+tags:
+  - mastra
+  - telegram
+  - libsql
+  - trust-boundaries
+techStack:
+  - TypeScript
+  - Mastra
+  - libSQL
+  - Telegram
+  - Google Sheets
+badges:
+  - open-source
+  - case-study
+  - writing
+sourceLinks:
+  - label: GitHub repository
+    url: https://github.com/KripaMishra/career-copilot
+    kind: source
+  - label: Public README
+    url: https://raw.githubusercontent.com/KripaMishra/career-copilot/master/README.md
+    kind: docs
+articleRefs:
+  - trusted-ingress-before-more-tools
+  - fail-closed-redaction-foundation
+adrRefs:
+  - context-memory-boundary
+challengeRefs: []
+decisionSlots:
+  - title: Keep trusted request context server-created
+    summary: Every tool invocation depends on owner, actor, conversation, and request identity created at ingress instead of trusted from client payloads.
+    status: published
+    adrRef: context-memory-boundary
+  - title: Delay resume-file ingestion until the redaction boundary is proven
+    summary: File and PDF onboarding stay outside the public product surface until the redaction stack is benchmarked and disclosure-safe.
+    status: planned
+---
+
+## Context
+
+Career Copilot is interesting because the public repository makes a narrow workflow legible instead of overselling a general AI assistant. The current slice takes a supported job URL, validates and fetches it through a guarded ingress pipeline, analyzes it, writes a private Markdown report row, verifies a Google Sheets update, and sends a completion notification.
+
+## Problem
+
+The hard part is not adding more tools. The hard part is making sure a tool that can fetch external content or write to durable systems always runs with the right owner, conversation, and request identity.
+
+## Constraints
+
+The README is explicit about what is not implemented yet: resume file ingestion, job discovery, scheduling, CSV import, browser-assisted applications, multi-owner support, distributed workers, and automatic applications. This case study keeps those exclusions visible because they are part of the design discipline.
+
+## Approach
+
+The public architecture treats ingress as a trust-establishment layer. Adapters authenticate the caller, authorize the owner and conversation, derive a stable request ID, create trusted request context, and then invoke the agent with scoped memory. URL fetches stay behind explicit allowlists and transport/content controls. Durable writes are verified instead of assumed.
+
+## Evidence
+
+Everything here is grounded in the public README and repository metadata. Safe screenshots or synthetic examples are intentionally deferred until the disclosure review lane approves them.
+
+## Decisions
+
+One published decision is surfaced below as a full ADR route. Additional planned decision slots remain visible but intentionally non-interactive until they have review-safe content.
+
+## Outcome / current state
+
+The project is in development. It already demonstrates a strong architecture lesson for agent systems: trusted ingress and scoped persistence matter more than expanding the tool list too early.
+
+## Next
+
+Future portfolio updates can add scrubbed walkthrough assets and additional ADRs once the public-safe evidence set grows.

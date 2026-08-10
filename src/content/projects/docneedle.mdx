@@ -1,0 +1,90 @@
+---
+title: DocNeedle
+summary: Local-first SQLite FTS5 tool for indexing docs, retrieving chunks, and checking stale terminology.
+visibility: public
+featured: true
+order: 3
+lifecycle: iterating
+stateSince: 2026-05-29
+currentState: Public README and v0.2.0 tag document a focused CLI surface while keeping benchmark harnesses explicitly separate from normal user workflows.
+problem: Documentation tools lose credibility when their everyday product surface and repo-specific evaluation harnesses are presented as the same thing.
+constraints:
+  - Keep benchmark discussion qualitative until linked public reports exist.
+  - Do not imply public patch-application support beyond the README.
+  - "Stay anchored to the documented CLI commands: index, search, read, and check."
+approach:
+  - Build the user-facing workflow around local markdown indexing, SQLite storage, FTS5 retrieval, chunk reads, and stale-term checks.
+  - Keep benchmark scripts repo-specific and label them clearly as author-environment tooling.
+  - Use a public version tag and explicit README limitations to frame maturity honestly.
+outcomes:
+  - Cleanest evidence package in the launch set for a full case study.
+  - Strong article angle on separating stable product surfaces from private evaluation harnesses.
+domains:
+  - developer-tools
+  - retrieval
+  - documentation-systems
+tags:
+  - sqlite
+  - fts5
+  - cli
+  - documentation
+techStack:
+  - Python
+  - SQLite
+  - FTS5
+badges:
+  - open-source
+  - experimental
+  - versioned
+  - case-study
+  - writing
+sourceLinks:
+  - label: GitHub repository
+    url: https://github.com/KripaMishra/doc-needle
+    kind: source
+  - label: Public README
+    url: https://raw.githubusercontent.com/KripaMishra/doc-needle/main/README.md
+    kind: docs
+releaseUrl: https://api.github.com/repos/KripaMishra/doc-needle/tags
+releaseLabel: Public tag evidence (v0.2.0)
+articleRefs:
+  - separate-product-surface-from-benchmark-harnesses
+adrRefs: []
+challengeRefs: []
+decisionSlots:
+  - title: Keep benchmark harnesses separate from the normal CLI surface
+    summary: Repo-specific evaluation scripts stay visible as implementation infrastructure, not implied end-user commands.
+    status: planned
+---
+
+## Context
+
+DocNeedle is the most portfolio-ready repository in the current evidence set because the README clearly explains what the tool does today and what is still author-environment infrastructure.
+
+## Problem
+
+Developer tools often blur stable commands, internal experiments, and benchmarking machinery into one narrative. That forces readers to guess what is actually safe to use.
+
+## Constraints
+
+This case study does not publish benchmark numbers or treat hidden scripts as productized features. It keeps the story close to the documented CLI.
+
+## Approach
+
+The public workflow is deliberately small: index a markdown corpus, search ranked chunks, read a chunk, and check for stale or conflicting terminology. The README also labels benchmark scripts as repo-specific and asks readers to patch hardcoded paths before reuse.
+
+## Evidence
+
+Public evidence includes the README, the repository tree, and the v0.2.0 tag. That is enough for versioned and open-source badges without inflating performance claims.
+
+## Decisions
+
+The current project page models an unpublished decision slot rather than inventing an ADR URL that does not exist yet.
+
+## Outcome / current state
+
+DocNeedle is iterating. It already supports a strong public case study because the product surface and the evaluation harness are separated clearly enough to inspect.
+
+## Next
+
+If public benchmark reports are added later, the case study can expand with attributable results while keeping the same core story.

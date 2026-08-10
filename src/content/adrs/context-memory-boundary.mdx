@@ -1,0 +1,33 @@
+---
+title: Trusted request context stays server-created
+summary: Career Copilot keeps owner, conversation, and request identity in trusted server-generated context instead of accepting them from untrusted payloads.
+visibility: public
+decidedAt: 2026-08-10
+projectRefs:
+  - career-copilot
+decision: Require ingress to create trusted request context before agent tools can fetch URLs, read memory, or write durable outputs.
+status: accepted
+evidenceLinks:
+  - label: Career Copilot README
+    url: https://raw.githubusercontent.com/KripaMishra/career-copilot/master/README.md
+    kind: docs
+---
+
+## Context
+
+Career Copilot combines private context, URL fetches, report generation, and durable writes. The public README makes clear that tools should not trust owner or conversation identifiers supplied directly by a client payload.
+
+## Decision
+
+Ingress establishes a trusted `RequestContext` on the server and passes that context into the agent runtime. Tooling reads owner, actor, conversation, and request identity from that server-created envelope instead of from caller-controlled fields.
+
+## Alternatives considered
+
+- Let each tool validate raw caller metadata independently.
+- Pass conversation and owner identifiers directly from the chat transport.
+
+Both alternatives duplicate trust logic and make context confusion easier.
+
+## Consequences
+
+The adapter layer takes on more responsibility up front, but every downstream tool gets a smaller and more defensible contract. That tradeoff keeps authorization and durable writes easier to reason about as the workflow grows.

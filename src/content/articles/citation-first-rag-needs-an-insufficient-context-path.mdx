@@ -1,0 +1,96 @@
+---
+title: Citation-first RAG needs an insufficient-context path
+summary: The CUDA Documentation Copilot is most credible when sources stay visible and unsupported questions stop instead of improvising.
+deck: A citation-first demo earns trust by showing its sources, naming its infrastructure, and treating insufficient context as a valid result.
+visibility: public
+publicationStatus: review-draft
+reviewLabel: review-draft
+publishedAt: 2026-08-11
+topics:
+  - retrieval
+  - citations
+  - rag
+  - evaluation
+relatedProjects:
+  - cuda-documentation-copilot
+evidenceLinks:
+  - label: CUDA Documentation Copilot README
+    url: https://raw.githubusercontent.com/KripaMishra/cuda-documentation-rag/master/README.md
+    kind: docs
+sourceEvidenceNotes:
+  - "Public README: https://raw.githubusercontent.com/KripaMishra/cuda-documentation-rag/master/README.md"
+disclosureCaveats:
+  - Keep the article framed as a demo, not a production system or general CUDA documentation benchmark.
+  - Do not generalize fixture-set hit rate, MRR, or current-process latency diagnostics.
+  - Do not imply that the repository redistributes or relicenses NVIDIA documentation.
+---
+
+## Citations are behavior, not decoration
+
+A retrieval demo can display links and still leave the important question unanswered: what happens when the retrieved material does not support a useful answer?
+
+The public CUDA Documentation Copilot README gives that question a concrete answer. It describes the project as a citation-first RAG demo for CUDA documentation questions. Answers must expose supporting sources, while unsupported questions return an explicit insufficient-context response. That second rule is the more important one.
+
+A source list is useful only if the system is willing to stop when the source does not carry the claim. Otherwise the citations become decoration around the same speculative behavior a retrieval layer was meant to constrain.
+
+## The default path proves something narrow
+
+The default demo mode uses a 12-record project-authored fixture corpus and deterministic local TF-IDF retrieval. It does not require an API key, Milvus, Elasticsearch, a GPU, a model download, or a crawl. When `GEMINI_API_KEY` is absent, the demo can use an offline extractive fallback.
+
+That is not a claim about general CUDA documentation quality. It is a compact way to make the interaction contract inspectable:
+
+- a question enters a known fixture set
+- retrieval produces ranked supporting records
+- the answer exposes source details
+- unsupported questions stop with insufficient context
+
+The small corpus is a limitation, but it is also useful. A reader can understand what the demo path depends on without first reconstructing a cloud stack. The README keeps this path separate from the fuller retrieval mode, which makes the boundary visible rather than hiding it behind one launch command.
+
+## Full mode changes the trust assumptions
+
+The fuller path is not merely a larger version of the same local demo. The README describes Gemini embeddings with Milvus or Zilliz Cloud vector search. Elasticsearch BM25 is optional and can be fused with dense results when available.
+
+Those choices add different operational assumptions. Generation and embedding requests go to Gemini. That brings API quota, cost, and input-privacy decisions into scope. Vector search depends on Milvus or Zilliz infrastructure, while hybrid retrieval can add Elasticsearch.
+
+A credible public explanation should name that change directly. “Full mode” is not evidence that the demo has become production-ready. It is evidence that the retrieval path can be exercised with a broader infrastructure stack whose privacy, availability, and cost boundaries need separate review.
+
+The distinction matters because portfolio writing often collapses implementation paths into one vague capability statement. Here the clearer story is that the local fixture path and cloud-backed path answer different questions. One makes the behavior easy to inspect; the other demonstrates how the retrieval components connect when external services are available.
+
+## Insufficient context is a product state
+
+Many question-answering interfaces treat refusal as an error to smooth over. Citation-first retrieval should do the opposite.
+
+If the available records do not support an answer, “insufficient context” is a useful result. It tells the user that the boundary held. It also gives the system an observable state that can be evaluated separately from answer quality.
+
+That state becomes more valuable when source metadata remains concrete. The README describes sources with fields such as URL, title, section, identifiers, score, excerpt, date, and provenance. The point is not to show every field in every interface. The point is to preserve a route from an answer back to the material that supported it.
+
+This changes the product question from “Did the model produce a fluent answer?” to two narrower questions:
+
+1. Did retrieval surface material that actually supports the response?
+2. Did the system stop when that support was missing?
+
+Those questions are easier to inspect, and they make failure less ambiguous.
+
+## Keep evaluation inside its evidence boundary
+
+The README is careful about its evaluation language. Hit rate and mean reciprocal rank describe only the small checked fixture set and must not be generalized to CUDA documentation quality. Reported latency values are current-process diagnostics, not benchmarks.
+
+That distinction should survive in the portfolio article.
+
+A fixture-level evaluation can still be useful. It can catch regressions in a known set, verify that expected source records are retrieved, and make the demo repeatable. What it cannot do is prove broad documentation coverage, production latency, or answer accuracy across the CUDA ecosystem.
+
+The honest framing is therefore smaller and stronger: the repository documents a checked demo path, exposes citations, and distinguishes local fixture diagnostics from general performance claims.
+
+## Documentation ownership also has a boundary
+
+The public README says the repository does not redistribute an NVIDIA documentation dataset or relicense NVIDIA documentation. That is another boundary worth keeping visible.
+
+A documentation assistant may retrieve or point to external material without owning the underlying corpus. Public writing should not blur that distinction. The useful claim is about the system behavior—the citation path, retrieval modes, and insufficient-context response—not ownership of the source documentation.
+
+## What this draft does not claim
+
+This article does not claim that the project is production-ready, accuracy-benchmarked, or deployed at scale. It does not generalize the 12-record fixture results. It does not turn current-process timing diagnostics into latency benchmarks. It does not imply that external API inputs are automatically safe to send or that the repository redistributes CUDA documentation.
+
+The public evidence supports a more durable lesson:
+
+A citation-first RAG demo becomes credible when it keeps sources inspectable, names the infrastructure boundary, and treats insufficient context as a successful stop condition rather than an inconvenience to hide.

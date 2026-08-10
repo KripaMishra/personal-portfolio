@@ -1,0 +1,92 @@
+---
+title: mastra-pii
+summary: Deterministic local PII redaction layer for Mastra.
+visibility: public
+featured: true
+order: 2
+lifecycle: in-development
+stateSince: 2026-08-09
+currentState: Alpha 1 README documents deterministic local redaction, bounded entity coverage, custom regex support, and fail-closed behavior while explicitly rejecting broader model-backed layers.
+problem: Agent pipelines create many surfaces where sensitive text can leak. A first release needs a failure mode that stays honest and local before it promises broader coverage.
+constraints:
+  - Use only synthetic examples in the portfolio.
+  - Do not imply perfect recall, production telemetry, package adoption, or implemented NER/model layers.
+  - Keep factual claims tied to the Alpha 1 README.
+approach:
+  - Start with deterministic local redaction built around @openredaction/core/lite.
+  - Merge overlapping spans deterministically and apply placeholders predictably.
+  - Fail closed with a generic redaction marker instead of silently implying success.
+outcomes:
+  - Clear public-safe example of privacy-first boundary setting for agent tooling.
+  - Strong companion article on fail-closed behavior and explicit limitations.
+domains:
+  - privacy-engineering
+  - agent-infrastructure
+  - pii-redaction
+tags:
+  - privacy
+  - redaction
+  - mastra
+  - deterministic-systems
+techStack:
+  - TypeScript
+  - Mastra
+  - OpenRedaction
+badges:
+  - open-source
+  - experimental
+  - case-study
+  - writing
+sourceLinks:
+  - label: GitHub repository
+    url: https://github.com/KripaMishra/mastra-pii
+    kind: source
+  - label: Public README
+    url: https://raw.githubusercontent.com/KripaMishra/mastra-pii/main/README.md
+    kind: docs
+articleRefs:
+  - fail-closed-redaction-foundation
+adrRefs:
+  - sensitive-data-boundary
+challengeRefs: []
+decisionSlots:
+  - title: Keep the first release deterministic and fail closed
+    summary: Alpha 1 stays local, deterministic, and explicit about failure instead of hinting at broader unsupported privacy coverage.
+    status: published
+    adrRef: sensitive-data-boundary
+  - title: Add broader model-backed layers only as new trust assumptions
+    summary: NER and model layers stay deferred until they can be introduced with explicit guarantees and review-safe evidence.
+    status: planned
+---
+
+## Context
+
+The public README frames mastra-pii as a foundation release, not a finished privacy platform. That honesty is the strength of the project.
+
+## Problem
+
+Sensitive text can leak through prompts, traces, memory, retries, and exported artifacts. A privacy layer that looks broader than it really is can be more dangerous than a narrow layer with explicit limits.
+
+## Constraints
+
+The Alpha 1 scope rejects `ner` and `model` layers, avoids network calls during redaction, and refuses to claim perfect recall. This case study keeps those limits front and center.
+
+## Approach
+
+mastra-pii exposes a compact surface: async text redaction, a Processor-compatible integration point, deterministic placeholders, optional custom regexes, and fail-closed error handling. The design favors explainability and predictable local behavior over maximal coverage.
+
+## Evidence
+
+The portfolio uses the public README as the primary evidence source and keeps all example text synthetic.
+
+## Decisions
+
+A published ADR captures why the initial release locks in deterministic local behavior. Planned follow-on slots remain static so the UI never implies an unpublished decision already exists.
+
+## Outcome / current state
+
+The project is in development, but the public evidence already supports a concrete technical lesson: honest limits plus fail-closed behavior are part of the product value.
+
+## Next
+
+Future revisions can add benchmark-backed evaluation notes or additional decision records once public-safe evidence is available.

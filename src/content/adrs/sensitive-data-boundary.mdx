@@ -1,0 +1,33 @@
+---
+title: Start the privacy boundary with deterministic local redaction
+summary: mastra-pii keeps the first public release deterministic, local, and explicit about failure instead of implying broader unsupported privacy coverage.
+visibility: public
+decidedAt: 2026-08-09
+projectRefs:
+  - mastra-pii
+decision: Ship Alpha 1 as a deterministic local redaction layer with fail-closed behavior before introducing broader model-backed privacy assumptions.
+status: accepted
+evidenceLinks:
+  - label: mastra-pii README
+    url: https://raw.githubusercontent.com/KripaMishra/mastra-pii/main/README.md
+    kind: docs
+---
+
+## Context
+
+Privacy tooling becomes risky when it looks broader than it really is. The public README for mastra-pii explicitly rejects `ner` and `model` layers in Alpha 1 and refuses to claim perfect recall.
+
+## Decision
+
+The first public release stays local and deterministic, built around bounded entity coverage, stable placeholders, custom regex hooks, and a generic fail-closed marker when redaction cannot be completed safely.
+
+## Alternatives considered
+
+- Introduce model-backed NER in the first release.
+- Present the package as a broader document-redaction system before evaluation evidence is public.
+
+Those options would expand the trust surface faster than the public evidence can support.
+
+## Consequences
+
+The package is easier to explain, integrate, and review. The tradeoff is intentionally narrower coverage, but the public interface remains honest about what it can and cannot guarantee.
