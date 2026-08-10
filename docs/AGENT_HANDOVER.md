@@ -9,6 +9,7 @@ The runnable portfolio is implemented and verified in both publication stages.
 - Review build: 19 generated pages, including four review-draft articles.
 - Production build: 15 generated pages; review drafts are excluded.
 - Responsive matrix: 72 layout checks per stage across six widths and two themes.
+- Theme regression check: the real toggle switches to dark, persists through reload, and activates the expected palette.
 - Latest verified result: lint, Astro check, schema checks, both builds, and both end-to-end suites passed with zero horizontal overflow.
 
 Do not treat this as publication approval. Review-draft articles and any unresolved disclosure-sensitive claims still require owner approval.
@@ -22,7 +23,7 @@ Preserve:
 - Newsreader for display/editorial headings.
 - Instrument Sans for interface and body copy.
 - IBM Plex Mono only for technical metadata.
-- Lotus light as the safe default and near-black dark as a persisted option.
+- Lotus light as the safe default and a Kanagawa-inspired dark palette (`#16161d` canvas, warm off-white text, coral and blue accents) as a persisted option.
 - Route-specific composition, strong typography, meaningful rules, and compact reference rails.
 - Symbolic imagery for trust boundaries, redaction, retrieval, memory, citations, evidence approval, documents, and routing.
 - Visible keyboard focus, semantic headings, reduced-motion support, and zero overflow at 320px.
@@ -97,7 +98,7 @@ Expected baseline:
 - Content schema: four articles and three experience entries.
 - Review build: 19 pages.
 - Production build: 15 pages.
-- End-to-end checks: 72 successful layout checks per stage, both themes, maximum horizontal overflow `0`.
+- End-to-end checks: the real theme toggle persists after reload, plus 72 successful layout checks per stage across both themes with maximum horizontal overflow `0`.
 - Production output: no review-draft routes, draft references, confirmation queue, or private absolute paths.
 
 Counts may legitimately change when approved content is added. Update assertions and this handover in the same change.

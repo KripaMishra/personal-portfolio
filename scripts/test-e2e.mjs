@@ -157,6 +157,11 @@ writeFileSync(harnessPath, `<!doctype html>
 <script>
   const frame = document.getElementById('frame');
   const result = document.getElementById('result');
+  const params = new URLSearchParams(location.search);
+  const requestedTheme = params.get('theme') === 'dark' ? 'dark' : 'light';
+  const verifyToggle = params.get('toggle') === 'true';
+  let toggled = false;
+
   frame.addEventListener('load', () => {
     const check = (attempt = 0) => {
       const doc = frame.contentDocument;
@@ -164,18 +169,38 @@ writeFileSync(harnessPath, `<!doctype html>
       const content = doc.querySelector('[data-site-header-content]');
       const shell = doc.querySelector('[data-scroll-progress-shell]');
       const status = doc.querySelector('[data-scroll-progress-status]');
+      const toggle = doc.querySelector('[data-theme-toggle]');
+
+      if (verifyToggle && !toggled) {
+        if ((!toggle || toggle.dataset.themeValue !== 'dark') && attempt < 60) return setTimeout(() => check(attempt + 1), 50);
+        if (!toggle || toggle.dataset.themeValue !== 'dark') return result.textContent = JSON.stringify({ ok: false, reason: 'theme-script-not-ready' });
+        toggle.click();
+        toggled = true;
+        frame.contentWindow.location.reload();
+        return;
+      }
+
       if ((!shell || shell.dataset.ready !== 'true') && attempt < 60) return setTimeout(() => check(attempt + 1), 50);
-      if (!header || !content || !shell || !status) return result.textContent = JSON.stringify({ ok: false, reason: 'missing-elements' });
+      if (!header || !content || !shell || !status || !toggle) return result.textContent = JSON.stringify({ ok: false, reason: 'missing-elements' });
+
       const headerRect = header.getBoundingClientRect();
       const contentRect = content.getBoundingClientRect();
       const shellRect = shell.getBoundingClientRect();
       const statusRect = status.getBoundingClientRect();
       const horizontalOverflow = Math.max(doc.documentElement.scrollWidth, doc.body.scrollWidth) - frame.contentWindow.innerWidth;
-      const expectedTheme = new URLSearchParams(location.search).get('theme') || 'light';
+      const expectedTheme = verifyToggle ? 'dark' : requestedTheme;
       const activeTheme = doc.documentElement.dataset.theme;
+      const activePalette = getComputedStyle(doc.documentElement).getPropertyValue('--color-bg').trim();
+      const storedTheme = frame.contentWindow.localStorage.getItem('portfolio-theme');
+      const toggleLabel = toggle.textContent.trim();
+      const themeReady = activeTheme === expectedTheme && (!verifyToggle || (activePalette === '#16161d' && storedTheme === 'dark' && toggleLabel === 'Light'));
       const payload = {
-        ok: activeTheme === expectedTheme && getComputedStyle(header).position === 'sticky' && getComputedStyle(shell).position !== 'fixed' && shellRect.top >= contentRect.bottom - 1 && statusRect.top >= contentRect.bottom - 1 && shellRect.bottom <= headerRect.bottom + 1 && horizontalOverflow <= 1,
+        ok: themeReady && shell.dataset.ready === 'true' && getComputedStyle(header).position === 'sticky' && getComputedStyle(shell).position !== 'fixed' && shellRect.top >= contentRect.bottom - 1 && statusRect.top >= contentRect.bottom - 1 && shellRect.bottom <= headerRect.bottom + 1 && horizontalOverflow <= 1,
         theme: activeTheme,
+        activePalette,
+        storedTheme,
+        toggleLabel,
+        scriptsReady: shell.dataset.ready === 'true',
         headerPosition: getComputedStyle(header).position,
         shellPosition: getComputedStyle(shell).position,
         contentBottom: +contentRect.bottom.toFixed(2),
@@ -189,8 +214,8 @@ writeFileSync(harnessPath, `<!doctype html>
     };
     check();
   });
-  const params = new URLSearchParams(location.search);
-  localStorage.setItem('portfolio-theme', params.get('theme') === 'dark' ? 'dark' : 'light');
+
+  localStorage.setItem('portfolio-theme', requestedTheme);
   frame.style.width = params.get('width') + 'px';
   frame.src = params.get('path') || '/';
 </script>`, 'utf8');
@@ -227,6 +252,7 @@ const viewports = [
 ];
 const themes = ['light', 'dark'];
 const geometryResults = [];
+let themeInteractionResult;
 
 try {
   const origin = await new Promise((resolveListen, rejectListen) => {
@@ -237,6 +263,22 @@ try {
       resolveListen(`http://127.0.0.1:${address.port}`);
     });
   });
+
+  const { stdout: themeDumpDom } = await runFile(
+    chromiumPath,
+    [
+      ...chromiumArgs,
+      '--window-size=390,900',
+      '--virtual-time-budget=7000',
+      '--dump-dom',
+      `${origin}/__layout-check__.html?path=%2F&width=390&theme=light&toggle=true`,
+    ],
+    { timeout: 15000 },
+  );
+  const themeMatch = themeDumpDom.match(/<pre id="result">([^<]+)<\/pre>/);
+  if (!themeMatch) throw new Error('Could not read theme interaction result.');
+  themeInteractionResult = JSON.parse(themeMatch[1]);
+  if (!themeInteractionResult.ok) throw new Error(`Theme toggle regression: ${JSON.stringify(themeInteractionResult)}`);
 
   for (const viewport of viewports) {
     const windowSize = `--window-size=${viewport.width},${viewport.height}`;
@@ -280,4 +322,5 @@ try {
 }
 
 console.log(`${stage} readiness checks passed for ${requiredPages.length} built pages.`);
+console.log(`Theme interaction passed: ${JSON.stringify(themeInteractionResult)}`);
 console.log(`Layout checks passed: ${JSON.stringify(geometryResults)}`);
