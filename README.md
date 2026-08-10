@@ -76,6 +76,10 @@ docs/                 Maintainer and content-governance documentation
 3. Keep unsupported claims, private paths, confidential data, and unapproved metrics out of committed content.
 4. Run the complete validation sequence before publication.
 
+## Editorial imagery
+
+Project and article visuals use a small symbolic SVG system rather than product mockups or generic AI imagery. Its Open Design Cloud workflow, mapping logic, accessibility contract, generation brief, and future-project checklist are documented in [`docs/EDITORIAL_IMAGES.md`](docs/EDITORIAL_IMAGES.md).
+
 ## Continuing development
 
 Read [`docs/AGENT_HANDOVER.md`](docs/AGENT_HANDOVER.md) before changing architecture, content governance, publication stages, or visual direction.

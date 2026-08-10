@@ -37,6 +37,7 @@ Avoid gradients, glass effects, heavy shadows, fake dashboards, generic code scr
 | Collection schemas | `src/content.config.ts` |
 | Visibility and relationship validation | `src/lib/content.ts` |
 | Visual asset mappings | `src/lib/visuals.ts` |
+| Image generation and expansion guide | `docs/EDITORIAL_IMAGES.md` |
 | Shared document shell | `src/layouts/BaseLayout.astro` |
 | Header, cards, theme, and progress UI | `src/components/` |
 | Theme and scroll behavior | `src/scripts/` |
@@ -105,7 +106,7 @@ Counts may legitimately change when approved content is added. Update assertions
 
 ## Safe continuation workflow
 
-1. Read `README.md` and `docs/content-governance.md`.
+1. Read `README.md`, `docs/content-governance.md`, and `docs/EDITORIAL_IMAGES.md` when the task touches media.
 2. Inspect the exact route, collection, and shared helpers affected by the task.
 3. Reuse existing components, tokens, and visual mappings before adding abstractions.
 4. Make the smallest coherent change.
