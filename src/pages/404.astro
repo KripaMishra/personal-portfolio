@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { pageTitle } from '../site';
+---
+
+<BaseLayout
+  title={pageTitle('Page not found')}
+  description="Fallback page for unknown portfolio routes."
+>
+  <div class="page-shell">
+    <section class="panel panel-inner prose">
+      <p class="eyebrow">404</p>
+      <h1 class="page-title">This route does not exist.</h1>
+      <p>The portfolio uses a small static route surface. Try heading back to the work index, writing index, or homepage.</p>
+      <ul class="inline-list">
+        <li><a class="link-chip" href="/">Home</a></li>
+        <li><a class="link-chip" href="/work">Work</a></li>
+        <li><a class="link-chip" href="/writing">Writing</a></li>
+      </ul>
+    </section>
+  </div>
+</BaseLayout>

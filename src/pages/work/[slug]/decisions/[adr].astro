@@ -1,0 +1,76 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { getEntries, getCollection, render } from 'astro:content';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import { formatDate, getPublicProjects } from '../../../../lib/content';
+import { pageTitle } from '../../../../site';
+
+export async function getStaticPaths() {
+  const [adrs, projects] = await Promise.all([getCollection('adrs'), getPublicProjects()]);
+  const projectById = new Map(projects.map((project) => [project.id.replace(/\.(md|mdx)$/, ''), project]));
+  return adrs
+    .filter((adr) => adr.data.visibility === 'public')
+    .flatMap((adr) =>
+      adr.data.projectRefs
+        .map((reference) => projectById.get(reference.id.replace(/\.(md|mdx)$/, '')))
+        .filter((project): project is CollectionEntry<'projects'> => Boolean(project))
+        .map((project) => ({ params: { slug: project.slug, adr: adr.slug }, props: { adr, project } })),
+    );
+}
+
+interface Props {
+  adr: CollectionEntry<'adrs'>;
+  project: CollectionEntry<'projects'>;
+}
+
+const { adr, project } = Astro.props;
+const { Content } = await render(adr);
+const linkedProjects = await getEntries(adr.data.projectRefs);
+---
+
+<BaseLayout title={pageTitle(adr.data.title)} description={adr.data.summary}>
+  <div class="page-shell">
+    <section class="decision-head">
+      <div>
+        <p class="eyebrow">Decision record · {adr.data.status}</p>
+        <h1 class="page-title">{adr.data.title}</h1>
+        <p class="lead">{adr.data.summary}</p>
+      </div>
+      <p class="meta">Decided {formatDate(adr.data.decidedAt)} · <a href={`/work/${project.slug}`}>{project.data.title}</a></p>
+    </section>
+
+    <blockquote class="decision-statement">{adr.data.decision}</blockquote>
+
+    <div class="detail-grid">
+      <article class="prose">
+        <Content />
+      </article>
+
+      <aside class="info-stack" aria-label="Decision references">
+        <section>
+          <h2>Project</h2>
+          <p><a href={`/work/${project.slug}`}>{project.data.title} →</a></p>
+          <p class="muted">{project.data.summary}</p>
+        </section>
+
+        <section>
+          <h2>Also linked to</h2>
+          <ul class="reference-list">
+            {linkedProjects.map((linkedProject) => <li><a href={`/work/${linkedProject.slug}`}>{linkedProject.data.title} →</a></li>)}
+          </ul>
+        </section>
+
+        <section>
+          <h2>Evidence</h2>
+          {adr.data.evidenceLinks.length > 0 ? (
+            <ul class="reference-list">
+              {adr.data.evidenceLinks.map((link) => <li><a href={link.url} rel="noreferrer" target="_blank">{link.label} ↗</a></li>)}
+            </ul>
+          ) : (
+            <p class="muted">No external evidence links published yet.</p>
+          )}
+        </section>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

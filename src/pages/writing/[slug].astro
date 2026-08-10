@@ -1,0 +1,95 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { getEntries, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { filterIndexVisibleEntries, formatDate, getRoutableArticles, isReviewStage } from '../../lib/content';
+import { getArticleVisual } from '../../lib/visuals';
+import { pageTitle } from '../../site';
+
+export async function getStaticPaths() {
+  const articles = await getRoutableArticles();
+  return articles.map((article) => ({ params: { slug: article.slug }, props: { article } }));
+}
+
+interface Props {
+  article: CollectionEntry<'articles'>;
+}
+
+const { article } = Astro.props;
+const { Content } = await render(article);
+const visual = getArticleVisual(article.slug);
+const relatedProjects = filterIndexVisibleEntries(await getEntries(article.data.relatedProjects));
+---
+
+<BaseLayout title={pageTitle(article.data.title)} description={article.data.summary}>
+  <div class="page-shell">
+    <section class="article-head">
+      <div class="article-head__copy">
+        <p class="eyebrow">Writing · {article.data.reviewLabel ?? 'Published'}</p>
+        <h1 class="page-title">{article.data.title}</h1>
+        <p class="lead">{article.data.deck ?? article.data.summary}</p>
+        <p class="meta">
+          {formatDate(article.data.publishedAt)}
+          {article.data.updatedAt && ` · updated ${formatDate(article.data.updatedAt)}`}
+          {' · '}{article.data.topics.join(' · ')}
+        </p>
+      </div>
+      <figure class="article-head__visual">
+        <img src={visual.src} width="1200" height="760" alt={visual.alt} />
+        <figcaption>{visual.caption}</figcaption>
+      </figure>
+    </section>
+
+    {isReviewStage && article.data.reviewLabel && (
+      <div class="review-note" role="note">
+        This is a review draft. Production excludes it until source and disclosure review are complete.
+      </div>
+    )}
+
+    <div class="detail-grid article-layout">
+      <article class="prose article-body">
+        <Content />
+      </article>
+
+      <aside class="info-stack" aria-label="Article references">
+        <section>
+          <h2>Related projects</h2>
+          {relatedProjects.length > 0 ? (
+            <ul class="reference-list">
+              {relatedProjects.map((project) => <li><a href={`/work/${project.slug}`}>{project.data.title} →</a></li>)}
+            </ul>
+          ) : (
+            <p class="muted">No related project links are published yet.</p>
+          )}
+        </section>
+
+        <section>
+          <h2>Evidence</h2>
+          {article.data.evidenceLinks.length > 0 ? (
+            <ul class="reference-list">
+              {article.data.evidenceLinks.map((link) => (
+                <li><a href={link.url} rel="noreferrer" target="_blank">{link.label} ↗</a></li>
+              ))}
+            </ul>
+          ) : (
+            <p class="muted">No external evidence links have been added yet.</p>
+          )}
+        </section>
+
+        {article.data.disclosureCaveats.length > 0 && (
+          <section>
+            <h2>Disclosure</h2>
+            <ul class="reference-list">
+              {article.data.disclosureCaveats.map((note) => <li>{note}</li>)}
+            </ul>
+          </section>
+        )}
+
+        <section>
+          <h2>Image note</h2>
+          <p class="muted">Custom synthetic study created for this portfolio. No private interface or user data is shown.</p>
+        </section>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

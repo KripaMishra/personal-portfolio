@@ -1,0 +1,72 @@
+---
+import ArticleCard from '../components/ArticleCard.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getPublicArticles, isReviewStage } from '../lib/content';
+import { pageTitle } from '../site';
+
+const articles = await getPublicArticles();
+const topicCounts = articles.reduce<Record<string, number>>((accumulator, article) => {
+  article.data.topics.forEach((topic) => {
+    accumulator[topic] = (accumulator[topic] ?? 0) + 1;
+  });
+  return accumulator;
+}, {});
+---
+
+<BaseLayout
+  title={pageTitle('Writing')}
+  description="Evidence-grounded technical writing with explicit stage-aware publishing controls."
+>
+  <div class="page-shell">
+    <section class="route-lead">
+      <div>
+        <p class="eyebrow">Writing index</p>
+        <h1 class="page-title">Notes that return to a system.</h1>
+      </div>
+      <p class="lead">Each essay starts in an existing README or accepted ADR and returns to the project that made the question concrete.</p>
+    </section>
+
+    {isReviewStage && (
+      <div class="review-note" role="note">
+        Review drafts are visible locally. Build with <code>PUBLIC_PORTFOLIO_STAGE=<wbr />production</code> to exclude them until source and disclosure review are complete.
+      </div>
+    )}
+
+    <section class="writing-intro" aria-label="Writing image language">
+      <figure>
+        <img src="/images/editorial/trust-boundary.svg" width="1200" height="760" alt="Architectural threshold with a single red handoff marker" />
+        <figcaption>Trusted boundaries — the handoff is visible before the work begins.</figcaption>
+      </figure>
+      <figure>
+        <img src="/images/editorial/redaction-study.svg" width="1200" height="760" alt="Synthetic document study with sensitive lines obscured" />
+        <figcaption>Redaction — structure remains legible while content is withheld.</figcaption>
+      </figure>
+    </section>
+
+    <div class="topic-rail" aria-labelledby="topics-heading">
+      <h2 id="topics-heading" class="meta">Topics</h2>
+      {Object.keys(topicCounts).length > 0 ? (
+        <p>{Object.entries(topicCounts).map(([topic, count]) => `${topic} ${count}`).join(' · ')}</p>
+      ) : (
+        <p class="muted">No public topic counts in this stage.</p>
+      )}
+    </div>
+
+    <section class="editorial-section" aria-labelledby="article-list-heading">
+      <div class="section-heading section-heading--split">
+        <div>
+          <p class="eyebrow">Index</p>
+          <h2 id="article-list-heading">Evidence before atmosphere.</h2>
+        </div>
+        <p class="lead">No invented metrics, employment claims, or confidential product details. Draft state remains visible until review is complete.</p>
+      </div>
+      {articles.length > 0 ? (
+        <div class="writing-list">
+          {articles.map((article) => <ArticleCard article={article} />)}
+        </div>
+      ) : (
+        <div class="empty-state">No public writing entries yet.</div>
+      )}
+    </section>
+  </div>
+</BaseLayout>

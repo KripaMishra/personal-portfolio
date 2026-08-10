@@ -1,0 +1,76 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getExperienceEntries, isReviewStage } from '../lib/content';
+import { pageTitle } from '../site';
+
+const roles = await getExperienceEntries();
+const confirmationItems = roles.flatMap((entry) =>
+  entry.data.needsConfirmation.map((note) => `${entry.data.organization} — ${entry.data.role}: ${note}`),
+);
+---
+
+<BaseLayout
+  title={pageTitle('Resume')}
+  description="Verified professional experience timeline rendered from typed content, with review-only confirmation notes kept explicit."
+>
+  <div class="page-shell">
+    <section class="route-lead">
+      <div>
+        <p class="eyebrow">Resume</p>
+        <h1 class="page-title">A timeline, not a claim cloud.</h1>
+      </div>
+      <p class="lead">Verified experience stays separate from project records. The route says what is known and leaves unapproved attachments out.</p>
+    </section>
+
+    <section class="resume-publishing-note" aria-labelledby="resume-principles-heading">
+      <p class="eyebrow" id="resume-principles-heading">Publishing rule</p>
+      <p>Only verified chronology appears here. Location, work mode, employer-confidential links, and a PDF download stay absent until explicitly sourced and approved.</p>
+    </section>
+
+    {isReviewStage && confirmationItems.length > 0 && (
+      <section class="review-note" role="note">
+        <strong>Preview-only confirmation queue.</strong>
+        <ul>
+          {confirmationItems.map((item) => <li>{item}</li>)}
+        </ul>
+      </section>
+    )}
+
+    <section class="editorial-section" aria-labelledby="timeline-heading">
+      <div class="section-heading">
+        <p class="eyebrow">Timeline</p>
+        <h2 id="timeline-heading">Reverse-chronological experience</h2>
+      </div>
+      <div class="resume-timeline">
+        {roles.map((entry) => (
+          <article class="resume-entry">
+            <div class="resume-entry__rail">
+              <p class="meta">{entry.data.start} — {entry.data.end}</p>
+              <p class="muted">{entry.data.organization}</p>
+            </div>
+            <div class="resume-entry__body">
+              <h3>{entry.data.role}</h3>
+              <p>{entry.data.summary}</p>
+              {entry.data.transitionNote && <p class="muted">{entry.data.transitionNote}</p>}
+              <section>
+                <h4>Evidence-backed highlights</h4>
+                <ul>
+                  {entry.data.highlights.map((highlight) => <li>{highlight}</li>)}
+                </ul>
+              </section>
+              <p class="meta resume-entry__skills">{entry.data.skills.join(' · ')}</p>
+              {isReviewStage && entry.data.needsConfirmation.length > 0 && (
+                <section class="resume-entry__review">
+                  <h4>Needs Kripa confirmation</h4>
+                  <ul>
+                    {entry.data.needsConfirmation.map((note) => <li>{note}</li>)}
+                  </ul>
+                </section>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  </div>
+</BaseLayout>

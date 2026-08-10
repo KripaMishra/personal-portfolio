@@ -1,0 +1,44 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { pageTitle, siteContact, siteLinks, siteOwner } from '../site';
+---
+
+<BaseLayout
+  title={pageTitle('About')}
+  description={`About page for ${siteOwner}'s portfolio with approved public-safe positioning.`}
+>
+  <div class="page-shell">
+    <section class="route-lead">
+      <div>
+        <p class="eyebrow">About</p>
+        <h1 class="page-title">Systems work, written down.</h1>
+      </div>
+      <p class="lead">I build product experiences, delivery systems, and the documentation that makes their boundaries inspectable.</p>
+    </section>
+
+    <div class="detail-grid">
+      <article class="prose">
+        <h2>What this site is for</h2>
+        <p>A durable home for case studies, architectural decisions, challenge writeups, and articles that can be reviewed in git before they go public.</p>
+        <h2>What stays out</h2>
+        <p>Private project details, unsupported metrics, and deployment assumptions remain absent until they are explicitly sourced and approved.</p>
+        <h2>How to read it</h2>
+        <p>Project records show current state and evidence. Writing narrows one decision at a time. The resume timeline stays separate so chronology never implies an unapproved employer link.</p>
+      </article>
+      <aside class="info-stack" aria-label="Profiles and contact">
+        <section>
+          <h2>Profiles</h2>
+          <ul class="reference-list">
+            <li><a href={siteLinks.github} rel="noreferrer" target="_blank">GitHub ↗</a></li>
+            <li><a href={siteLinks.linkedin} rel="noreferrer" target="_blank">LinkedIn ↗</a></li>
+          </ul>
+        </section>
+        <section>
+          <h2>Contact</h2>
+          <p>{siteContact.label}</p>
+          <p class="muted">Resume availability remains deferred until launch copy and an approved file are supplied.</p>
+        </section>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

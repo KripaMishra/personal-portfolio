@@ -1,0 +1,83 @@
+---
+import ProjectCard from '../components/ProjectCard.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getPublicProjects } from '../lib/content';
+import { pageTitle } from '../site';
+
+const projects = await getPublicProjects();
+const featured = projects.filter((project) => project.data.featured);
+const archive = projects.filter((project) => project.data.lifecycle === 'archived');
+const active = projects.filter((project) => project.data.lifecycle !== 'archived' && !project.data.featured);
+const lifecycleGroups = [
+  ['In development', projects.filter((project) => project.data.lifecycle === 'in-development').length],
+  ['Iterating', projects.filter((project) => project.data.lifecycle === 'iterating').length],
+  ['Complete', projects.filter((project) => project.data.lifecycle === 'complete').length],
+] as const;
+---
+
+<BaseLayout
+  title={pageTitle('Work')}
+  description="Public project index grouped by lifecycle, with explicit proof links, review-safe scope, and published-vs-unpublished ADR behavior."
+>
+  <div class="page-shell">
+    <section class="route-lead">
+      <div>
+        <p class="eyebrow">Work index</p>
+        <h1 class="page-title">Projects with an edge.</h1>
+      </div>
+      <p class="lead">A public index of systems work. Each detail page earns its space through evidence, exclusions, and visible decisions.</p>
+    </section>
+
+    <div class="work-rail" aria-label="Public project lifecycle summary">
+      <span class="meta">All work · {projects.length}</span>
+      {lifecycleGroups.map(([label, count]) => <span>{label} {count}</span>)}
+      <span>Claims scoped to public sources</span>
+    </div>
+
+    {featured.length > 0 && (
+      <section class="editorial-section" aria-labelledby="featured-projects-heading">
+        <div class="section-heading section-heading--split">
+          <div>
+            <p class="eyebrow">01 / Featured</p>
+            <h2 id="featured-projects-heading">Case studies with the clearest evidence path.</h2>
+          </div>
+          <p class="lead">These records have enough public documentation to show the problem, boundaries, approach, and current state without filling gaps with atmosphere.</p>
+        </div>
+        <div class="project-index">
+          {featured.map((project) => <ProjectCard project={project} />)}
+        </div>
+      </section>
+    )}
+
+    <section class="editorial-section" aria-labelledby="all-projects-heading">
+      <div class="section-heading section-heading--split">
+        <div>
+          <p class="eyebrow">02 / Experiments</p>
+          <h2 id="all-projects-heading">Smaller records, narrower claims.</h2>
+        </div>
+        <p class="lead">Useful public surfaces with thinner evidence stay concise until their documentation supports a deeper case study.</p>
+      </div>
+      {active.length > 0 ? (
+        <div class="project-index">
+          {active.map((project) => <ProjectCard project={project} />)}
+        </div>
+      ) : (
+        <div class="empty-state">No additional public projects are indexed yet.</div>
+      )}
+    </section>
+
+    <section class="editorial-section archive-section" aria-labelledby="archive-heading">
+      <div class="section-heading">
+        <p class="eyebrow">03 / Archive</p>
+        <h2 id="archive-heading">Dormant or historic work</h2>
+      </div>
+      {archive.length > 0 ? (
+        <div class="project-index">
+          {archive.map((project) => <ProjectCard project={project} />)}
+        </div>
+      ) : (
+        <p class="muted">Archived work appears only when a public historical snapshot is ready.</p>
+      )}
+    </section>
+  </div>
+</BaseLayout>
