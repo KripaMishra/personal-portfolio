@@ -17,7 +17,7 @@ const lifecycleGroups = [
 
 <BaseLayout
   title={pageTitle('Work')}
-  description="Public project index grouped by lifecycle, with explicit proof links, review-safe scope, and published-vs-unpublished ADR behavior."
+  description="Public project index grouped by lifecycle, with explicit evidence links and scoped claims."
 >
   <div class="page-shell">
     <section class="route-lead">
@@ -62,7 +62,7 @@ const lifecycleGroups = [
           {active.map((project) => <ProjectCard project={project} />)}
         </div>
       ) : (
-        <div class="empty-state">No additional public projects are indexed yet.</div>
+        <div class="empty-state">No additional public projects.</div>
       )}
     </section>
 
@@ -76,7 +76,7 @@ const lifecycleGroups = [
           {archive.map((project) => <ProjectCard project={project} />)}
         </div>
       ) : (
-        <p class="muted">Archived work appears only when a public historical snapshot is ready.</p>
+        <p class="muted">No archived public project records.</p>
       )}
     </section>
   </div>

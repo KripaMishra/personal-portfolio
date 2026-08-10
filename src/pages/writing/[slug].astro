@@ -2,7 +2,7 @@
 import type { CollectionEntry } from 'astro:content';
 import { getEntries, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { filterIndexVisibleEntries, formatDate, getRoutableArticles, isReviewStage } from '../../lib/content';
+import { filterIndexVisibleEntries, formatDate, getRoutableArticles } from '../../lib/content';
 import { getArticleVisual } from '../../lib/visuals';
 import { pageTitle } from '../../site';
 
@@ -25,7 +25,7 @@ const relatedProjects = filterIndexVisibleEntries(await getEntries(article.data.
   <div class="page-shell">
     <section class="article-head">
       <div class="article-head__copy">
-        <p class="eyebrow">Writing · {article.data.reviewLabel ?? 'Published'}</p>
+        <p class="eyebrow">Writing · Engineering note</p>
         <h1 class="page-title">{article.data.title}</h1>
         <p class="lead">{article.data.deck ?? article.data.summary}</p>
         <p class="meta">
@@ -40,12 +40,6 @@ const relatedProjects = filterIndexVisibleEntries(await getEntries(article.data.
       </figure>
     </section>
 
-    {isReviewStage && article.data.reviewLabel && (
-      <div class="review-note" role="note">
-        This is a review draft. Production excludes it until source and disclosure review are complete.
-      </div>
-    )}
-
     <div class="detail-grid article-layout">
       <article class="prose article-body">
         <Content />
@@ -59,7 +53,7 @@ const relatedProjects = filterIndexVisibleEntries(await getEntries(article.data.
               {relatedProjects.map((project) => <li><a href={`/work/${project.slug}`}>{project.data.title} →</a></li>)}
             </ul>
           ) : (
-            <p class="muted">No related project links are published yet.</p>
+            <p class="muted">No related projects.</p>
           )}
         </section>
 
@@ -72,7 +66,7 @@ const relatedProjects = filterIndexVisibleEntries(await getEntries(article.data.
               ))}
             </ul>
           ) : (
-            <p class="muted">No external evidence links have been added yet.</p>
+            <p class="muted">No external evidence links.</p>
           )}
         </section>
 

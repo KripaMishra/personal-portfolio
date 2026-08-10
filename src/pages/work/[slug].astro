@@ -70,7 +70,7 @@ const decisionEntryById = new Map(decisionEntries.map((entry) => [entry.id.repla
               )}
             </ul>
           ) : (
-            <p class="muted">Evidence links have not been published yet.</p>
+            <p class="muted">No public evidence links.</p>
           )}
         </section>
 
@@ -81,28 +81,26 @@ const decisionEntryById = new Map(decisionEntries.map((entry) => [entry.id.repla
               {relatedArticles.map((article) => <li><a href={`/writing/${article.slug}`}>{article.data.title} →</a></li>)}
             </ul>
           ) : (
-            <p class="muted">No related writing is public yet.</p>
+            <p class="muted">No related writing.</p>
           )}
         </section>
 
         <section>
           <h2>Decisions</h2>
-          {project.data.decisionSlots.length > 0 || relatedAdrs.length > 0 ? (
+          {decisionEntries.length > 0 || relatedAdrs.length > 0 ? (
             <div class="decision-grid">
               {project.data.decisionSlots.map((slot) => {
-                const entry = slot.adrRef ? decisionEntryById.get(slot.adrRef.id.replace(/\.(md|mdx)$/, '')) : undefined;
-                const href = entry ? `/work/${project.slug}/decisions/${entry.slug}` : null;
-                return href ? (
-                  <a class="decision-card" href={href}>
+                if (!slot.adrRef) {
+                  return null;
+                }
+
+                const entry = decisionEntryById.get(slot.adrRef.id.replace(/\.(md|mdx)$/, ''));
+                return entry ? (
+                  <a class="decision-card" href={`/work/${project.slug}/decisions/${entry.slug}`}>
                     <span class="decision-card__state">Published ADR</span>
                     <strong>{slot.title}</strong>
                   </a>
-                ) : (
-                  <div class="decision-card decision-card--static">
-                    <span class="decision-card__state">ADR not yet published</span>
-                    <strong>{slot.title}</strong>
-                  </div>
-                );
+                ) : null;
               })}
               {relatedAdrs
                 .filter((adr) => !project.data.decisionSlots.some((slot) => slot.adrRef?.id.replace(/\.(md|mdx)$/, '') === adr.id.replace(/\.(md|mdx)$/, '')))
@@ -114,7 +112,7 @@ const decisionEntryById = new Map(decisionEntries.map((entry) => [entry.id.repla
                 ))}
             </div>
           ) : (
-            <p class="muted">No related ADRs are public yet.</p>
+            <p class="muted">No related ADRs.</p>
           )}
         </section>
 

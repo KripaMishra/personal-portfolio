@@ -14,7 +14,6 @@ const detailHref = `/writing/${article.slug}`;
   <p class="article-card__meta meta">
     <span>{formatDate(article.data.publishedAt)}</span>
     <span>{article.data.topics[0] ?? 'Writing'}</span>
-    {article.data.reviewLabel && <span>{article.data.reviewLabel}</span>}
   </p>
   <div class="article-card__copy">
     <h3>{article.data.title}</h3>

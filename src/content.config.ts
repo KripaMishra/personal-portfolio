@@ -122,7 +122,6 @@ const articleCollection = defineCollection({
     deck: z.string().min(1).optional(),
     visibility: visibilitySchema,
     publicationStatus: publicationStatusSchema,
-    reviewLabel: z.string().min(1).optional(),
     publishedAt: z.date(),
     updatedAt: z.date().optional(),
     topics: z.array(z.string().min(1)).default([]),
@@ -178,7 +177,6 @@ const experienceCollection = defineCollection({
     relatedProjects: z.array(reference('projects')).default([]),
     relatedWriting: z.array(reference('articles')).default([]),
     verificationSources: z.array(z.string().min(1)).min(1),
-    needsConfirmation: z.array(z.string().min(1)).default([]),
     publicationStatus: publicationStatusSchema,
   }),
 });

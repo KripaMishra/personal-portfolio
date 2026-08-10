@@ -74,9 +74,29 @@ const indexHtml = readPage('index.html');
 const aboutHtml = readPage('about/index.html');
 const writingHtml = readPage('writing/index.html');
 const resumeHtml = readPage('resume/index.html');
+const nowHtml = readPage('now/index.html');
 const careerCopilotHtml = readPage('work/career-copilot/index.html');
 const docNeedleHtml = readPage('work/docneedle/index.html');
+const ssiHtml = readPage('work/ssi-sales-intelligence-agent/index.html');
 const projectHtml = projectSlugs.map((slug) => readPage(`work/${slug}/index.html`)).join('\n');
+const reviewArticleHtml = stage === 'review' ? reviewArticlePages.map(readPage).join('\n') : '';
+const renderedSurfaces = [indexHtml, aboutHtml, writingHtml, resumeHtml, nowHtml, projectHtml, reviewArticleHtml].join('\n');
+const pendingUiPhrases = [
+  'Contact details pending approval',
+  'Preview-only confirmation queue',
+  'Needs Kripa confirmation',
+  'Confirm whether',
+  'Review drafts are visible locally',
+  'This is a review draft',
+  'review-draft',
+  'Resume availability remains deferred',
+  'deployment approval remain intentionally unresolved',
+  'explicit portfolio approval',
+  'until owner approval is explicit',
+  'ADR not yet published',
+  'No related writing is public yet',
+  'No related ADRs are public yet',
+];
 const singleLinkSurface = (html, href) => {
   const escapedHref = href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return (html.match(new RegExp(`href="${escapedHref}"`, 'g'))?.length ?? 0) === 1;
@@ -89,10 +109,13 @@ const assertions = [
   [singleLinkSurface(indexHtml, '/work/mastra-pii') && singleLinkSurface(indexHtml, '/work/docneedle'), 'Secondary homepage projects should each have one link surface.'],
   [indexHtml.includes('href="/resume"') && indexHtml.includes('Skip to content'), 'Home should link Resume and retain the skip link.'],
   [resumeHtml.includes('Verified professional experience timeline') && !resumeHtml.includes('Download resume'), 'Resume should render the timeline without a PDF action.'],
-  [careerCopilotHtml.includes('href="/work/career-copilot/decisions/context-memory-boundary"') && careerCopilotHtml.includes('ADR not yet published') && careerCopilotHtml.includes('Published ADR'), 'Career Copilot should distinguish published and unpublished ADRs.'],
-  [!docNeedleHtml.includes('/work/docneedle/decisions/') && docNeedleHtml.includes('ADR not yet published'), 'DocNeedle should not link its unpublished ADR.'],
+  [careerCopilotHtml.includes('href="/work/career-copilot/decisions/context-memory-boundary"') && careerCopilotHtml.includes('Published ADR') && !careerCopilotHtml.includes('ADR not yet published'), 'Career Copilot should expose only its published ADR.'],
+  [!docNeedleHtml.includes('/work/docneedle/decisions/') && docNeedleHtml.includes('No related ADRs.'), 'DocNeedle should omit unpublished decision placeholders.'],
   [aboutHtml.includes('https://github.com/KripaMishra') && aboutHtml.includes('https://www.linkedin.com/in/kripa-mishra/'), 'About should use approved social profiles.'],
-  [aboutHtml.includes('Contact details pending approval'), 'About contact placeholder should remain inert.'],
+  [aboutHtml.includes('GitHub and LinkedIn are the current public contact channels.') && aboutHtml.includes('No downloadable resume PDF is offered.'), 'About should render the conservative contact and resume choices.'],
+  [resumeHtml.includes('TapHealth') && resumeHtml.includes('Present') && !resumeHtml.includes('LangGraph') && !resumeHtml.includes('remote or hybrid'), 'Resume should keep the sourced organization and current role while omitting unsupported details.'],
+  [ssiHtml.includes('without claiming a live deployment') && nowHtml.includes('without claiming a live deployment'), 'SSI pages should use the conservative no-deployment framing.'],
+  [pendingUiPhrases.every((phrase) => !renderedSurfaces.includes(phrase)), 'Rendered pages must not expose pending-confirmation or internal review copy.'],
 ];
 
 if (stage === 'review') {
@@ -100,15 +123,12 @@ if (stage === 'review') {
     [articleSlugs.every((slug) => singleLinkSurface(indexHtml, `/writing/${slug}`)), 'Review home should link each canonical article once.'],
     [articleSlugs.every((slug) => writingHtml.includes(`/writing/${slug}`)), 'Review Writing index should link all canonical articles.'],
     [careerCopilotHtml.includes('/writing/trusted-ingress-before-more-tools') && careerCopilotHtml.includes('/writing/fail-closed-redaction-foundation') && docNeedleHtml.includes('/writing/separate-product-surface-from-benchmark-harnesses'), 'Review project pages should link their canonical related articles.'],
-    [indexHtml.includes('PUBLIC_PORTFOLIO_STAGE=production') && writingHtml.replace(/<wbr\s*\/?\s*>/g, '').includes('PUBLIC_PORTFOLIO_STAGE=production'), 'Review pages should explain production filtering.'],
-    [resumeHtml.includes('Preview-only confirmation queue') && resumeHtml.includes('Needs Kripa confirmation'), 'Review Resume should expose confirmation notes.'],
+    [reviewArticlePages.every((page) => readPage(page).includes('Writing · Engineering note')), 'Review article pages should use reader-facing content labels.'],
   );
 } else {
   const productionSurfaces = `${indexHtml}\n${writingHtml}\n${projectHtml}`;
   assertions.push(
     [articleSlugs.every((slug) => !productionSurfaces.includes(slug)), 'Production home, Writing, and project relations must omit review article links.'],
-    [!productionSurfaces.toLowerCase().includes('review-draft'), 'Production surfaces must omit review-draft labels.'],
-    [!resumeHtml.includes('Preview-only confirmation queue') && !resumeHtml.includes('Needs Kripa confirmation') && !resumeHtml.includes('Confirm whether'), 'Production Resume must omit confirmation-only text.'],
   );
 }
 

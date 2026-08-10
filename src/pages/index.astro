@@ -1,7 +1,7 @@
 ---
 import ArticleCard from '../components/ArticleCard.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getPublicArticles, getPublicProjects, isReviewStage } from '../lib/content';
+import { getPublicArticles, getPublicProjects } from '../lib/content';
 import { getProjectVisual, heroVisual } from '../lib/visuals';
 import { pageTitle } from '../site';
 
@@ -117,21 +117,15 @@ const currentFocus = [
           <p class="eyebrow">03 / Writing</p>
           <h2 id="latest-writing-heading">The note behind the decision.</h2>
         </div>
-        <p class="lead">Each draft starts in a public README or accepted ADR and returns to the project that made the question concrete.</p>
+        <p class="lead">Each note starts in a public README or accepted ADR and returns to the project that made the question concrete.</p>
       </div>
-
-      {isReviewStage && (
-        <div class="review-note" role="note">
-          Review drafts are visible locally. Build with <code>PUBLIC_PORTFOLIO_STAGE=production</code> to exclude them until source and disclosure review are complete.
-        </div>
-      )}
 
       {homepageArticles.length > 0 ? (
         <div class="writing-list" aria-label="Latest writing destinations">
           {homepageArticles.map((article) => <ArticleCard article={article} />)}
         </div>
       ) : (
-        <div class="empty-state">No public writing entries are visible in this stage.</div>
+        <div class="empty-state">No writing entries are published.</div>
       )}
     </section>
 
@@ -141,7 +135,7 @@ const currentFocus = [
         <h2 id="resume-route-heading">A timeline, not a claim cloud.</h2>
       </div>
       <div>
-        <p class="lead">Verified experience has its own route. A PDF stays absent until an approved file exists.</p>
+        <p class="lead">Verified experience has its own route. The web timeline is the current resume format.</p>
         <p class="route-cta__links"><a class="text-link" href="/resume">Open the timeline →</a> <a href="/about">Read the portfolio framing</a></p>
       </div>
     </section>

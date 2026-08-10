@@ -27,6 +27,7 @@ Preserve:
 - Route-specific composition, strong typography, meaningful rules, and compact reference rails.
 - Symbolic imagery for trust boundaries, redaction, retrieval, memory, citations, evidence approval, documents, and routing.
 - Visible keyboard focus, semantic headings, reduced-motion support, and zero overflow at 320px.
+- Reader-ready copy in review builds: internal confirmation notes, `review-draft` labels, and unpublished-decision placeholders never render.
 
 Avoid gradients, glass effects, heavy shadows, fake dashboards, generic code screenshots, repetitive cards, oversized headings, vague bordered containers, pill spam, and generic AI imagery.
 
@@ -100,7 +101,8 @@ Expected baseline:
 - Review build: 19 pages.
 - Production build: 15 pages.
 - End-to-end checks: the real theme toggle persists after reload, plus 72 successful layout checks per stage across both themes with maximum horizontal overflow `0`.
-- Production output: no review-draft routes, draft references, confirmation queue, or private absolute paths.
+- Review output: no pending-confirmation queues, internal review labels, or unpublished-decision placeholders.
+- Production output: no review-draft routes, draft references, or private absolute paths.
 
 Counts may legitimately change when approved content is added. Update assertions and this handover in the same change.
 

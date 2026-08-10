@@ -40,7 +40,7 @@ for (const relativePath of articleFiles) {
 
   assert.match(frontmatter, /^visibility: public$/m, `${relativePath} should stay publicly routable in review mode.`);
   assert.match(frontmatter, /^publicationStatus: review-draft$/m, `${relativePath} should remain review-draft until approval.`);
-  assert.match(frontmatter, /^reviewLabel: review-draft$/m, `${relativePath} should declare the visible review label.`);
+  assert.doesNotMatch(frontmatter, /^reviewLabel:/m, `${relativePath} should not carry a reader-facing review label.`);
   assert.ok(hasListField(frontmatter, 'relatedProjects'), `${relativePath} should keep typed related project references.`);
   assert.ok(hasListField(frontmatter, 'evidenceLinks'), `${relativePath} should record evidence links.`);
   assert.ok(hasListField(frontmatter, 'sourceEvidenceNotes'), `${relativePath} should record source evidence notes.`);
@@ -56,7 +56,7 @@ for (const relativePath of experienceFiles) {
   assert.ok(hasListField(frontmatter, 'highlights'), `${relativePath} should declare evidence-backed highlights.`);
   assert.ok(hasListField(frontmatter, 'skills'), `${relativePath} should declare skills used.`);
   assert.ok(hasListField(frontmatter, 'verificationSources'), `${relativePath} should include verification sources.`);
-  assert.ok(hasListField(frontmatter, 'needsConfirmation'), `${relativePath} should include review-only confirmation notes.`);
+  assert.doesNotMatch(frontmatter, /^needsConfirmation:/m, `${relativePath} should have no unresolved confirmation field.`);
 }
 
 console.log(`Content schema checks passed for ${articleFiles.length} articles and ${experienceFiles.length} experience entries.`);

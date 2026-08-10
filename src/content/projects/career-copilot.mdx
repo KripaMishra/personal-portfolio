@@ -56,9 +56,6 @@ decisionSlots:
     summary: Every tool invocation depends on owner, actor, conversation, and request identity created at ingress instead of trusted from client payloads.
     status: published
     adrRef: context-memory-boundary
-  - title: Delay resume-file ingestion until the redaction boundary is proven
-    summary: File and PDF onboarding stay outside the public product surface until the redaction stack is benchmarked and disclosure-safe.
-    status: planned
 ---
 
 ## Context
@@ -79,11 +76,11 @@ The public architecture treats ingress as a trust-establishment layer. Adapters 
 
 ## Evidence
 
-Everything here is grounded in the public README and repository metadata. Safe screenshots or synthetic examples are intentionally deferred until the disclosure review lane approves them.
+Everything here is grounded in the public README and repository metadata. Screenshots are omitted so the case study never exposes resumes, chats, reports, or account data.
 
 ## Decisions
 
-One published decision is surfaced below as a full ADR route. Additional planned decision slots remain visible but intentionally non-interactive until they have review-safe content.
+The published decision is surfaced below as a full ADR route.
 
 ## Outcome / current state
 
@@ -91,4 +88,4 @@ The project is in development. It already demonstrates a strong architecture les
 
 ## Next
 
-Future portfolio updates can add scrubbed walkthrough assets and additional ADRs once the public-safe evidence set grows.
+Future portfolio updates can add scrubbed walkthrough assets and additional ADRs when public evidence supports them.

@@ -6,7 +6,7 @@ export const siteLinks = {
 } as const;
 
 export const siteContact = {
-  label: 'Contact details pending approval',
+  label: 'GitHub and LinkedIn are the current public contact channels.',
 } as const;
 
 export const pageTitle = (title?: string) => (title ? `${title} — ${siteOwner}` : siteOwner);

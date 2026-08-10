@@ -30,7 +30,10 @@ This repository stores portfolio content as typed MDX so every public claim can 
 ## Editorial guardrails
 
 - No private health-product details, confidential metrics, or unapproved ownership claims.
-- Use placeholder-safe empty states instead of publishing unfinished narratives.
+- `publicationStatus` controls route generation but must not render as a reader-facing label.
+- Unresolved confirmation prompts belong in local planning, not tracked content records or rendered pages.
+- Planned decision slots stay out of the page until a public ADR exists.
+- Use concise factual empty states instead of publishing unfinished narratives.
 - Validate every change with `pnpm check` before review.
 
 ## Template usage

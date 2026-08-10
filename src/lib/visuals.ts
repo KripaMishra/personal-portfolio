@@ -28,8 +28,8 @@ const projectVisuals: Record<string, EditorialVisual> = {
   },
   'ssi-sales-intelligence-agent': {
     src: '/images/editorial/evidence-ledger.svg',
-    alt: 'Ruled evidence ledger with approved marks and one unresolved line',
-    caption: 'Evidence approval — public reachability is not publication permission.',
+    alt: 'Ruled evidence ledger with completed marks and one separated boundary line',
+    caption: 'Evidence boundary — repository visibility is not proof of deployment ownership.',
   },
   scavenger: {
     src: '/images/editorial/routing-plan.svg',

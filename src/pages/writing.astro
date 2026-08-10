@@ -1,7 +1,7 @@
 ---
 import ArticleCard from '../components/ArticleCard.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getPublicArticles, isReviewStage } from '../lib/content';
+import { getPublicArticles } from '../lib/content';
 import { pageTitle } from '../site';
 
 const articles = await getPublicArticles();
@@ -15,7 +15,7 @@ const topicCounts = articles.reduce<Record<string, number>>((accumulator, articl
 
 <BaseLayout
   title={pageTitle('Writing')}
-  description="Evidence-grounded technical writing with explicit stage-aware publishing controls."
+  description="Evidence-grounded technical writing connected to public project records."
 >
   <div class="page-shell">
     <section class="route-lead">
@@ -25,12 +25,6 @@ const topicCounts = articles.reduce<Record<string, number>>((accumulator, articl
       </div>
       <p class="lead">Each essay starts in an existing README or accepted ADR and returns to the project that made the question concrete.</p>
     </section>
-
-    {isReviewStage && (
-      <div class="review-note" role="note">
-        Review drafts are visible locally. Build with <code>PUBLIC_PORTFOLIO_STAGE=<wbr />production</code> to exclude them until source and disclosure review are complete.
-      </div>
-    )}
 
     <section class="writing-intro" aria-label="Writing image language">
       <figure>
@@ -48,7 +42,7 @@ const topicCounts = articles.reduce<Record<string, number>>((accumulator, articl
       {Object.keys(topicCounts).length > 0 ? (
         <p>{Object.entries(topicCounts).map(([topic, count]) => `${topic} ${count}`).join(' · ')}</p>
       ) : (
-        <p class="muted">No public topic counts in this stage.</p>
+        <p class="muted">No writing topics are published.</p>
       )}
     </div>
 
@@ -58,14 +52,14 @@ const topicCounts = articles.reduce<Record<string, number>>((accumulator, articl
           <p class="eyebrow">Index</p>
           <h2 id="article-list-heading">Evidence before atmosphere.</h2>
         </div>
-        <p class="lead">No invented metrics, employment claims, or confidential product details. Draft state remains visible until review is complete.</p>
+        <p class="lead">Claims stay bounded to public project documentation and linked evidence.</p>
       </div>
       {articles.length > 0 ? (
         <div class="writing-list">
           {articles.map((article) => <ArticleCard article={article} />)}
         </div>
       ) : (
-        <div class="empty-state">No public writing entries yet.</div>
+        <div class="empty-state">No writing entries are published.</div>
       )}
     </section>
   </div>
