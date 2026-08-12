@@ -40,7 +40,7 @@ const projectVisuals: Record<string, EditorialVisual> = {
 
 const articleVisuals: Record<string, EditorialVisual> = {
   'trusted-ingress-before-more-tools': projectVisuals['career-copilot'],
-  'fail-closed-redaction-foundation': projectVisuals['mastra-pii'],
+  'reliable-pii-redaction-for-modern-agents': projectVisuals['mastra-pii'],
   'separate-product-surface-from-benchmark-harnesses': {
     src: '/images/editorial/approval-desk.svg',
     alt: 'Synthetic approval desk with a checked document',

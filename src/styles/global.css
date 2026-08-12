@@ -841,6 +841,21 @@ figcaption {
   padding-left: 1.2rem;
 }
 
+.prose ul.contains-task-list,
+.article-body ul.contains-task-list {
+  padding-left: 0.2rem;
+  list-style: none;
+}
+
+.prose .task-list-item input[type='checkbox'],
+.article-body .task-list-item input[type='checkbox'] {
+  width: 0.95rem;
+  height: 0.95rem;
+  margin-right: 0.55rem;
+  accent-color: var(--color-accent);
+  vertical-align: -0.12em;
+}
+
 .prose blockquote,
 .article-body blockquote {
   max-width: 28ch;

@@ -202,6 +202,11 @@ export const getRelatedAdrs = async (projectId: string) => {
     .sort((left, right) => byDateDesc(left.data.decidedAt, right.data.decidedAt));
 };
 
+export const inlineMarkdownLinks = (text: string): string =>
+  text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" rel="noreferrer" target="_blank">$1</a>');
+
+export const stripMarkdownLinks = (text: string): string => text.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
+
 export const getRelatedChallenges = async (projectId: string) => {
   await assertPublicRelationshipVisibility();
   const entries = await getCollection('challenges');

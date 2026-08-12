@@ -1,7 +1,7 @@
 ---
 import ArticleCard from '../components/ArticleCard.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getPublicArticles, getPublicProjects } from '../lib/content';
+import { getPublicArticles, getPublicProjects, stripMarkdownLinks } from '../lib/content';
 import { getProjectVisual, heroVisual } from '../lib/visuals';
 import { pageTitle } from '../site';
 
@@ -77,7 +77,7 @@ const currentFocus = [
             <span class="meta project-kicker">Featured case study · {featuredProject.data.lifecycle}</span>
             <span class="featured-title">{featuredProject.data.title}</span>
             <span class="lead">{featuredProject.data.summary}</span>
-            <span>{featuredProject.data.currentState}</span>
+            <span>{stripMarkdownLinks(featuredProject.data.currentState)}</span>
             <span class="text-link">Read the case study →</span>
           </span>
         </a>

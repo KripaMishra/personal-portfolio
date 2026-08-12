@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { formatDate, getPublicProjects } from '../lib/content';
+import { formatDate, getPublicProjects, stripMarkdownLinks } from '../lib/content';
 import { pageTitle } from '../site';
 
 const activeProjects = (await getPublicProjects()).filter((project) =>
@@ -29,7 +29,7 @@ const activeProjects = (await getPublicProjects()).filter((project) =>
             <article>
               <p class="meta">{project.data.lifecycle} · since {formatDate(project.data.stateSince)}</p>
               <h3><a href={`/work/${project.slug}`}>{project.data.title}</a></h3>
-              <p>{project.data.currentState}</p>
+              <p>{stripMarkdownLinks(project.data.currentState)}</p>
             </article>
           ))}
         </div>
