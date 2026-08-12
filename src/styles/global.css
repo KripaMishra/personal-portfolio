@@ -230,6 +230,16 @@ h4 {
   color: var(--color-accent);
 }
 
+.section-heading .eyebrow,
+.route-cta .eyebrow {
+  width: fit-content;
+  padding: 0.12em 0.5em;
+  background: var(--color-accent);
+  color: var(--color-surface-strong);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
 .meta,
 .label,
 .muted,
