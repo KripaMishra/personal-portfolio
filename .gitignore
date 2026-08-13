@@ -9,3 +9,4 @@ docs/*
 !docs/EDITORIAL_IMAGES.md
 .pi-subagents/
 artifacts/
+.commandcode/
