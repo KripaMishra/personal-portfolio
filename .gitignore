@@ -10,3 +10,4 @@ docs/*
 .pi-subagents/
 artifacts/
 .commandcode/
+.pi/subagents/
