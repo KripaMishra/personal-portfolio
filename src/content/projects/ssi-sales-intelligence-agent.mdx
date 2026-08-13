@@ -95,7 +95,7 @@ The dataset is a sample FMCG sales export. Sample datasets are supposed to be ti
 
 Then the sales values arrived as strings: `"Rs 1,234"`. 9,416 rows. Someone formatted currency into a numeric column, which is the data-entry equivalent of writing a memo in Comic Sans.
 
-And then there was **9999**. The number 9999 is not a sales figure. It is a sentinel — a placeholder meaning "we don't know" — and it appeared 771 times in the units column. A further 734 rows had negative units (probably returns, possibly errors; the dataset has no returns dimension, so we treated them as errors). One row had -9999, which is 9999's sadder cousin.
+And then there was **9999**. The number 9999 is not a sales figure. It is a sentinel — a placeholder meaning "unknown" — and it appeared 771 times in the units column. A further 734 rows had negative units (probably returns, possibly errors; the dataset has no returns dimension, so I treated them as errors). One row had -9999, which is 9999's sadder cousin.
 
 The full cleaning ledger, for the record:
 
@@ -139,7 +139,7 @@ The agent is a single LLM in a loop (LangGraph): classify the question → call 
 - `search_docs` — vector search over the 30 business notes. Text is turned into coordinates (embeddings) so that similar *meaning* lands nearby, not just similar words.
 - `describe_database` — lets the model inspect the schema itself instead of memorizing it.
 
-We deliberately chose **one agent with tools** over a multi-agent committee. Multi-agent architectures sound impressive and cost tokens; a single agent with a tool loop does the same job with less latency, less state, and fewer moving parts. There's an ADR recording that decision (and five more like it).
+I deliberately chose **one agent with tools** over a multi-agent committee. Multi-agent architectures sound impressive and cost tokens; a single agent with a tool loop does the same job with less latency, less state, and fewer moving parts. There's an ADR recording that decision (and five more like it).
 
 The loop has a hard 180-second timeout, and output goes through two passes: the model gathers data freely, then a second call reformats it into a validated JSON contract. Validation is where the three question-type guarantees above are enforced — in code, not in vibes.
 
@@ -147,7 +147,7 @@ The loop has a hard 180-second timeout, and output goes through two passes: the 
 
 `POST /ask` doesn't run the agent inline. It drops the question into **QStash** (a managed queue), which calls a webhook (`/webhook/process`) when it's ready — with a signed signature so only the queue can trigger processing. The client polls for the result.
 
-Why bother? Because Vercel serverless functions (the deployment target) are short-lived: code runs in bursts on rented machines, and there's no always-on server — which means no always-on worker process. A managed queue is the serverless-native way to do async work. More on this in the next section, because it nearly cost me the project.
+Why bother? Because Vercel serverless functions (the deployment target) are short-lived: code runs in bursts on rented machines, and there's no always-on server — which means no always-on worker process. A managed queue is the serverless-native way to do async work. It was also the decision that nearly cost me the project — more on that in "What went wrong".
 
 ### 3. The cache: don't pay for the same answer twice
 
@@ -159,7 +159,7 @@ It's the difference between a demo that costs pennies and a demo that costs doll
 
 The most important piece for trust: **14 golden questions** (5 WHAT, 4 WHY, 3 WHAT_TO_DO, 2 out-of-scope), each with policy checks — did it return the right intent? The right status? Citations on WHY questions? A confidence score?
 
-This is what let us *measure* the model choice instead of vibes-ing it (next section). It runs offline against a stub for CI, or live against a real model.
+This is what let me *measure* the model choice instead of vibes-ing it (next section). It runs offline against a stub for CI, or live against a real model.
 
 ---
 
@@ -177,7 +177,7 @@ The problem: the plan never considered the deployment target. The target was **V
 - The swap instruction landed two minutes later: *"swap the redis with upstash instance of redis; swap the rq with QStash."*
 - QStash implementation followed: webhook endpoint, signature verification, signing-key fix.
 
-The plan was dead within two minutes of the work starting. Nothing about the RQ path was ever built — no worker, no compose file. But the cost was real: plan churn, prompt churn, and **burned AI credits that were supposed to fund review** (see: the AI-tooling constraints below).
+The plan was dead within two minutes of the work starting. Nothing about the RQ path was ever built — no worker, no compose file. But the cost was real: plan churn, prompt churn, and burned AI credits that were supposed to fund review (see: the AI-tooling constraints below).
 
 The lesson is embarrassingly simple and I'll state it plainly: **lock your infrastructure and your deploy target before you write code.** A plan that gets gitignored mid-execution is a plan that's already stale. This is recommendation #1 in the lessons doc, and it cost the most to learn.
 
@@ -185,11 +185,11 @@ The lesson is embarrassingly simple and I'll state it plainly: **lock your infra
 
 The project was built with an AI agent, under constraints that are worth being honest about:
 
-- **Retry churn.** The model repeatedly failed at things like putting citations in the wrong field, hardcoding confidence, or bypassing the query layer we built — six-plus defects found *one at a time*. Each retry is a full task re-run; the effective cost multiplier was ~2–3× the ideal.
+- **Retry churn.** The model repeatedly failed at things like putting citations in the wrong field, hardcoding confidence, or bypassing the query layer I built — six-plus defects found *one at a time*. Each retry is a full task re-run; the effective cost multiplier was ~2–3× the ideal.
 - **Text-only model.** No image input. Debugging HTML rendering issues meant guess-and-retry instead of *looking at the page*. Screenshots beat prayer.
 - **Token budget.** The queue rework + retries blew through the allocation, and the cheapest-to-fix findings (deploy constraint, review gap) landed as documentation debt instead of being prevented.
 
-None of this is an excuse — it's a measurement. AI-driven development is not free, and its failure modes are *process* failure modes: plan against them.
+None of this is an excuse — it's a measurement. AI-driven development is not free, and its failure modes are process failure modes: plan against them.
 
 ### The review loop that got cut
 
@@ -197,7 +197,7 @@ The queue pivot displaced the review activities — evals, benchmark, docs — w
 
 ---
 
-## What we measured (the turn-around)
+## What I measured (the turnaround)
 
 ### The benchmark
 
@@ -213,7 +213,7 @@ The "fast" candidate was 66% *slower* and *less* accurate, and it breached the 1
 Two findings made this benchmark worth it beyond the table:
 
 1. **Both models failed the same question** — a WHAT_TO_DO question where the agent returned a non-`PENDING_APPROVAL` status. Same failure on both models means it's a *spec-level* bug in the prompt, not a model deficiency. That's the difference between debugging your code and swapping models hoping.
-2. **The benchmark found a doc bug.** `.env.example` documented an env var (`AGENT_MODEL`) that the config code never actually read (the real one was `MODEL_NAME`). Found because we had to set the model to run the benchmark. Documentation that lies is a bug, and measurement finds it.
+2. **The benchmark found a doc bug.** `.env.example` documented an env var (`AGENT_MODEL`) that the config code never actually read (the real one was `MODEL_NAME`). Found because the model had to be set to run the benchmark. Documentation that lies is a bug, and measurement finds it.
 
 ### The hardening pass
 
