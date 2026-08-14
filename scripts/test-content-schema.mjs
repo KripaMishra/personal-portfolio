@@ -8,7 +8,7 @@ const root = process.cwd();
 
 const articleFiles = [
   'src/content/articles/trusted-ingress-before-more-tools.mdx',
-  'src/content/articles/fail-closed-redaction-foundation.mdx',
+  'src/content/articles/reliable-pii-redaction-for-modern-agents.mdx',
   'src/content/articles/separate-product-surface-from-benchmark-harnesses.mdx',
   'src/content/articles/citation-first-rag-needs-an-insufficient-context-path.mdx',
 ];

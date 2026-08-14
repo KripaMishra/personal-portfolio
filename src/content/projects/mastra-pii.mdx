@@ -1,31 +1,20 @@
 ---
 title: mastra-pii
-summary: Layered PII redaction for Mastra agents — a Presidio container adapter or a zero-dependency local engine, Indian identifier recognizers (Aadhaar/PAN/UPI/IFSC) with real checksums, and a fail-closed fallback contract.
+summary: "PII redaction for Mastra agents as an adapter, not a detector: one interface over a Presidio deployment — the package owns integration, the deployment owns intelligence — with a deterministic Indian-recognizer layer and fail-closed defaults."
 visibility: public
 featured: true
 order: 2
 lifecycle: in-development
 stateSince: 2026-08-09
-currentState: "v0.2.0-alpha.4 live on [npm](https://www.npmjs.com/package/@kripamishra/mastra-pii) with provenance attestation. One Analyzer interface, two engines — [RemotePresidioAdapter](https://github.com/KripaMishra/mastra-pii/blob/main/src/analyzer.ts) (84.6% typed recall on the v1 corpus, spaCy 6/6 Hinglish names) and the zero-dep LocalFallbackAdapter (fail-closed default on outage). P2 hardening backlog tracked in [issues #8–#19](https://github.com/KripaMishra/mastra-pii/issues/19)."
-problem: Agent loops move sensitive text through prompts, tool calls, traces, logs, and memory. For an agent app whose users write Hinglish and share Indian identifiers (Aadhaar, PAN, UPI, IFSC), every off-the-shelf redaction library lost on the data — the best packaged score was 30.8% typed recall with 27 false positives. The layer had to be measured, built, and productized around what the corpus proved.
+currentState: "Live on npm as [v0.2.0-alpha.4](https://www.npmjs.com/package/@kripamishra/mastra-pii) with provenance attestation. One interface, two analyzers: the [RemotePresidioAdapter](https://github.com/KripaMishra/mastra-pii/blob/main/src/analyzer.ts) over a deployed Presidio container (spaCy NER + per-request Indian recognizers) and a zero-dependency deterministic engine that doubles as the outage fallback. Extension path: recognizer pass-through ([#25](https://github.com/KripaMishra/mastra-pii/issues/25)). Remaining P2 hardening in [#19](https://github.com/KripaMishra/mastra-pii/issues/19)."
 constraints:
   - Synthetic examples only; never invent or reproduce real user text.
-  - No claims of perfect recall, production telemetry, implemented local NER, restoration, or structured-document redaction.
+  - No engine-accuracy claims anywhere; the comparison harnesses in docs/evaluation/ are internal-only.
+  - The package owns integration, the deployment owns intelligence — no claims that the adapter configures or gates NER/model layers.
+  - No promises of obfuscation canonicalization or new built-in recognizers — detection extensions are recognizer pass-through; #8–#13 are closed as out of scope.
+  - No claims of implemented local NER, restoration, telemetry, or structured-document redaction.
   - Redaction is one-way and fail-closed by design; ner/model layer requests throw.
   - The anti-overfitting corpus and the publishing runbook are local-only artifacts, not repo files.
-  - Benchmark numbers must match docs/evaluation/benchmark-results.md or stay qualitative.
-approach:
-  - Measure first — frozen synthetic corpus (20 messages, 39 spans, 19 types) and span-level harness; six engines actually run, best packaged result 30.8%.
-  - Build when the market loses — a ~120-line regex + Verhoeff prototype (69.2% recall, 2 FP, 2 ms) beat every library; a second anti-overfitting corpus proved the drop was uncovered types + obfuscation, not overfitting.
-  - Gate-first pivot — P0 spike of a deployed Presidio container gated on ≥60% recall / ≤5 FP / <300 ms — passed 84.6% / 2 FP / 16 ms; the local engine became the fail-closed fallback instead of waste.
-  - One interface, two adapters — RemotePresidioAdapter (analyze-only, client-side checksum and shape post-filters) and LocalFallbackAdapter; type-tagged placeholders, LRU cache.
-  - Extend Mastra's processor system — pii.processor implements the Processor interface — processInput / processLLMRequest / processOutputResult — a two-line agent change, automatic in-loop.
-  - Quality gates — 67 tests, verify:package clean-consumer check, npm audit clean, catastrophic-regex rejection in worker sandboxes.
-outcomes:
-  - "@kripamishra/mastra-pii 0.2.0-alpha.4 on npm with provenance attestation."
-  - presidio_indian — 84.6% typed recall, 2 FP, p95 16 ms on v1; spaCy caught 6/6 Hinglish names — the entire delta over regex-only.
-  - Honest gaps documented — obfuscated formats beat every engine (best v3 score 13.8%), ADDRESS uncovered, Hinglish names need NER.
-  - Adversarial review pass shipped — single-source recognizer and taxonomy tables, typed error contract (#20–#23).
 domains:
   - privacy-engineering
   - agent-infrastructure
@@ -34,7 +23,7 @@ tags:
   - privacy
   - redaction
   - mastra
-  - benchmarking
+  - adapter
   - fail-closed
 techStack:
   - TypeScript
@@ -53,9 +42,6 @@ sourceLinks:
   - label: Public README
     url: https://raw.githubusercontent.com/KripaMishra/mastra-pii/main/README.md
     kind: docs
-  - label: Benchmark results
-    url: https://raw.githubusercontent.com/KripaMishra/mastra-pii/main/docs/evaluation/benchmark-results.md
-    kind: docs
 releaseUrl: https://www.npmjs.com/package/@kripamishra/mastra-pii
 releaseLabel: "@kripamishra/mastra-pii 0.2.0-alpha.4 · npm"
 articleRefs:
@@ -68,52 +54,30 @@ decisionSlots:
     summary: The first release stays deterministic, local, and explicit about failure instead of implying broader unsupported privacy coverage.
     status: published
     adrRef: sensitive-data-boundary
-  - title: Adopt a remote Presidio analyzer behind the Analyzer interface
-    summary: Gate-first P0 spike passed (84.6% / 2 FP / 16 ms) — Presidio becomes the primary adapter, the local engine remains the fail-closed fallback. ADR pending.
-    status: planned
 ---
 
 ## Context
 
-mastra-pii is [layered PII redaction for Mastra agent loops](https://github.com/KripaMishra/mastra-pii): one `Analyzer` interface, two engines — a remote Presidio adapter and a zero-dependency local engine that doubles as the outage fallback — wired into the agent loop as a Mastra processor. It ships as [`@kripamishra/mastra-pii`](https://www.npmjs.com/package/@kripamishra/mastra-pii), live on npm.
-
-The story behind it is measure-first: every packaged library lost on the data that matters (Hinglish chat, Indian identifiers), so the project benchmarked, built, checked its own work for overfitting, and productized around a gated Presidio spike.
+The package owns the integration; the deployment owns the intelligence. mastra-pii is an adapter over a Presidio deployment — not a detector — and its story is compatibility and ease of use, not engine accuracy.
 
 ## Problem
 
-An agent loop touches sensitive text at many surfaces: prompts, tool inputs and outputs, traces, logs, memory. The consumer is an agent application whose users write Hinglish and share Indian identifiers — Aadhaar, PAN, UPI, IFSC, bank accounts. Western redaction libraries optimize for English prose and US formats; on one frozen corpus the best packaged score was **30.8% typed recall with 27 false positives**. Regex-only detection has a hard ceiling: it cannot find names, and obfuscated formats defeat it. A reliable layer needs a measured answer, not a pattern-library arms race.
+An agent loop touches sensitive text at many surfaces — prompts, tool inputs and outputs, traces, logs, memory — and every one of them needs redaction coverage. The consumer is an agent application whose users write Hinglish and share Indian identifiers (Aadhaar, PAN, UPI, IFSC, bank accounts); Western redaction libraries optimize for English prose and US formats, so off-the-shelf coverage was never the answer. The hard problem that remains is integration: wiring a redaction layer into a Mastra agent normally means custom code at every boundary. The adapter exists so that wiring is zero.
 
 ## Approach
 
-1. **Measure first.** A frozen synthetic corpus (20 chat messages, 39 true spans, 19 types) with span-level metrics: typed recall, coverage, false positives, fully-correct messages, latency. Six engines actually run — best packaged result 30.8%.
-2. **Build when the market loses.** A ~120-line recognizer set — 17 regexes plus a real Verhoeff checksum, zero dependencies, 2 ms for the whole corpus — scored **69.2% / 2 FP / 8 of 20 fully correct**, with 15 of 19 types caught completely.
-3. **Check your own work.** A second corpus engineered to defeat pattern overfitting (29 spans, 20 FP traps) dropped the prototype to 10.3% — decomposed as 52% never-covered types plus 45% obfuscated formats, not classic overfitting. Every packaged engine collapsed harder (openredaction: 3.4% / 47 FP).
-4. **Gate-first pivot.** Ship a wrapper around a deployed Presidio container — but only after a P0 spike passed the gate: ≥60% typed recall, ≤5 FP, p95 under 300 ms. Result: **84.6% / 2 FP / 16 ms**. spaCy caught 6/6 Hinglish names; the in-house engine stayed as the fail-closed fallback.
-5. **Extend Mastra, don't wrap it.** `pii.processor` implements Mastra's `Processor` interface — `inputProcessors: [pii.processor]` plus `outputProcessors` is the whole integration. Checksum and shape post-filters run client-side; placeholders are type-tagged (`[PAN_1]`); custom regexes run in terminable worker sandboxes.
-
-## Route to the current state
-
-| Date | Step |
-|---|---|
-| 2026-08-09 | [Epic #1](https://github.com/KripaMishra/mastra-pii/issues/1) opened; [Alpha 1 foundation](https://github.com/KripaMishra/mastra-pii/commit/102e2e9) established deterministic local redaction |
-| 2026-08-11 | [Research report](https://github.com/KripaMishra/mastra-pii/blob/main/docs/pii-backend-research.md) + [v1 corpus](https://github.com/KripaMishra/mastra-pii/blob/main/docs/evaluation/indian_pii_testsuite.json) committed; [6-engine benchmark](https://github.com/KripaMishra/mastra-pii/blob/main/docs/evaluation/benchmark-results.md) showed every library lost |
-| 2026-08-11 | [v3 anti-overfitting harness](https://github.com/KripaMishra/mastra-pii/blob/main/docs/evaluation/bench-v3.mjs) exposed the honest ceiling of regex-only detection |
-| 2026-08-11 | [Pivot plan](https://github.com/KripaMishra/mastra-pii/blob/main/docs/presidio-adapter-plan.md) led to the [P0 Presidio spike](https://github.com/KripaMishra/mastra-pii/blob/main/docs/evaluation/benchmark-results.md) — gate passed |
-| 2026-08-11 | [P1 adapter build](https://github.com/KripaMishra/mastra-pii/commit/99cb3f5): adapter pair, engine switch, 21-entity taxonomy, third hook |
-| 2026-08-12 | [Mastra 1.57 alignment](https://github.com/KripaMishra/mastra-pii/commit/53fb744) verified; [`0.2.0-alpha.3 → 0.2.0-alpha.4`](https://www.npmjs.com/package/@kripamishra/mastra-pii) published on npm |
-| 2026-08-12 | [Adversarial review fixes #20](https://github.com/KripaMishra/mastra-pii/issues/20)–[#23](https://github.com/KripaMishra/mastra-pii/issues/23) shipped; hardening backlog ordered in [#19](https://github.com/KripaMishra/mastra-pii/issues/19) |
+1. **One interface, two analyzers.** `RemotePresidioAdapter` talks to a deployed Presidio container (spaCy NER by default, plus per-request Indian recognizers); `LocalFallbackAdapter` is the zero-dependency deterministic engine that takes over on outage. Swap deployments without changing app code.
+2. **The deterministic layer ships with the package.** `INDIAN_DEFAULTS` — Indian regex recognizers with client-side Verhoeff (Aadhaar) and Luhn (cards) checksums, a curated entity allowlist, and shape post-filters — sent as per-request `ad_hoc_recognizers`, and runnable standalone with no deployment at all.
+3. **Drop-in Mastra integration.** `pii.processor` implements Mastra's `Processor` interface — `inputProcessors: [pii.processor]` plus `outputProcessors` is the whole integration, with a third hook (`processLLMRequest`) covering every model call including tool continuations. Placeholders stay type-tagged (`[PAN_1]`); custom regexes run in time-bounded worker sandboxes.
+4. **Fail-closed by default.** Outages degrade to the local engine (or `[REDACTION_FAILED]` in strict mode); raw PII never leaks.
+5. **Layer boundaries explicit.** The package accepts only the deterministic layer; `ner` and `model` requests are rejected. Adding a model layer or custom recognizers is a deployment-side decision.
 
 ## Roadmap
 
-The P2 hardening backlog is tracked as GitHub issues, ordered by dependencies in the master issue [#19](https://github.com/KripaMishra/mastra-pii/issues/19). All items below are currently open:
+Built-in recognizer expansion ([#9](https://github.com/KripaMishra/mastra-pii/issues/9)–[#13](https://github.com/KripaMishra/mastra-pii/issues/13)) and obfuscation canonicalization ([#8](https://github.com/KripaMishra/mastra-pii/issues/8)) are **closed as out of scope** (2026-08-14) — detection extensions flow through recognizer pass-through, not new built-ins. The remaining P2 hardening is tracked in the master issue [#19](https://github.com/KripaMishra/mastra-pii/issues/19), ordered for implementation — pick the first open one, top to bottom:
 
 - [ ] [#14](https://github.com/KripaMishra/mastra-pii/issues/14) — Presidio adapter: retries with jitter + timeout config
-- [ ] [#8](https://github.com/KripaMishra/mastra-pii/issues/8) — Canonicalize obfuscated PII before detection (`[at]`/`[dot]`, leet, spaced formats) — the v3 failure mode that beats every engine
-- [ ] [#9](https://github.com/KripaMishra/mastra-pii/issues/9) — Recognizer: GSTIN (15-char, check-digit validated)
-- [ ] [#10](https://github.com/KripaMishra/mastra-pii/issues/10) — Recognizer: VID (Aadhaar Virtual ID, Verhoeff)
-- [ ] [#11](https://github.com/KripaMishra/mastra-pii/issues/11) — Recognizer: SWIFT/BIC
-- [ ] [#13](https://github.com/KripaMishra/mastra-pii/issues/13) — Recognizer: JWT
-- [ ] [#12](https://github.com/KripaMishra/mastra-pii/issues/12) — Recognizer: GOVT_ID (remaining government identifiers)
+- [ ] [#25](https://github.com/KripaMishra/mastra-pii/issues/25) — Recognizer pass-through: user recognizers (Presidio shape) replace the adapter's recognizer set; custom patterns (local shape) run in both modes — the documented way to add detection
 - [ ] [#16](https://github.com/KripaMishra/mastra-pii/issues/16) — Observability: per-entity redaction counters
 - [ ] [#15](https://github.com/KripaMishra/mastra-pii/issues/15) — Agent-callable redactPII Mastra tool
 - [ ] [#17](https://github.com/KripaMishra/mastra-pii/issues/17) — Structured-document inspection (redact inside JSON/objects)
@@ -121,16 +85,23 @@ The P2 hardening backlog is tracked as GitHub issues, ordered by dependencies in
 
 ## Evidence
 
-The evaluation is fully public: the corpus is synthetic, the harnesses live in [`docs/evaluation/`](https://github.com/KripaMishra/mastra-pii/tree/main/docs/evaluation) (bench, bench-v3, bench-presidio), and every result table — v1 headline, per-type detail, v3 generalization, the Presidio P0 spike, and the gate verdict — is in [`benchmark-results.md`](https://raw.githubusercontent.com/KripaMishra/mastra-pii/main/docs/evaluation/benchmark-results.md). The [npm page](https://www.npmjs.com/package/@kripamishra/mastra-pii) shows the published versions with provenance attestation. Portfolio examples are synthetic fixtures only.
+The package is live on npm (provenance-attested), the [README](https://raw.githubusercontent.com/KripaMishra/mastra-pii/main/README.md) documents the full contract, and the repo is public — `src/` for the adapter internals, `deploy/` for the Presidio recipe. Comparison harnesses live in [`docs/evaluation/`](https://github.com/KripaMishra/mastra-pii/tree/main/docs/evaluation) for internal use; accuracy is the deployed analyzer's property, not this package's headline. Portfolio examples are synthetic fixtures only.
 
 ## Decisions
 
-The [published ADR](/work/mastra-pii/decisions/sensitive-data-boundary) records the starting decision: deterministic local redaction with fail-closed behavior before broader model-backed promises. The pivot to a remote Presidio analyzer was gate-first — the P0 spike published its tables before any package work — and is pending an ADR of its own.
+The [published ADR](/work/mastra-pii/decisions/sensitive-data-boundary) records the starting decision: deterministic local redaction with fail-closed behavior before broader model-backed promises. The pivot to a remote Presidio analyzer was gated on an internal spike before any package work.
 
 ## Outcome / current state
 
-The package is live on npm (`0.2.0-alpha.4`, provenance-attested) with 67 passing tests and a clean-consumer verification gate. What it does not do is documented as loudly as what it does: obfuscated formats still beat every engine, ADDRESS is uncovered, Hinglish names require the remote NER. Those gaps are the roadmap above, not a surprise.
+The package is live on npm (`0.2.0-alpha.4`, provenance-attested) with 67 passing tests and a clean-consumer verification gate. What it does not do is documented as loudly as what it does:
+
+- Obfuscated formats still defeat every engine — a stated permanent limit, not a backlog item.
+- Names and addresses are NER-only, deployment-side.
+- International identifiers have no built-in recognizers; pass-through is the extension path.
+- The model layer is explicitly out of scope.
+
+Those limits are scope, not surprises.
 
 ## Next
 
-The hardening backlog (#19) is the ordered plan: canonicalization first, then the missing recognizers, observability, the agent-callable tool, structured-document inspection, and finally the Mastra compatibility matrix. Each lands behind the same gates — measured on the corpora, verified before release.
+The hardening backlog (#19) is the ordered plan: retries with jitter, recognizer pass-through, observability, the agent-callable tool, structured-document inspection, and finally the Mastra compatibility matrix. Release cadence bundles pairs per alpha — alpha.5 = #14 + #25, alpha.6 = #16 + #15, alpha.7 = #17 + #18, then stable `0.2.0` once the matrix is green. Every alpha ships through the existing release workflow (trusted publishing, provenance attestation) — no token publishes.
