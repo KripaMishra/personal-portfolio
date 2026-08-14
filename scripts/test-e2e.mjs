@@ -20,7 +20,7 @@ const harnessPath = resolve(distDir, '__layout-check__.html');
 const chromiumCandidates = ['/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome'];
 const articleSlugs = [
   'trusted-ingress-before-more-tools',
-  'fail-closed-redaction-foundation',
+  'reliable-pii-redaction-for-modern-agents',
   'separate-product-surface-from-benchmark-harnesses',
   'citation-first-rag-needs-an-insufficient-context-path',
 ];
@@ -122,7 +122,7 @@ if (stage === 'review') {
   assertions.push(
     [articleSlugs.every((slug) => singleLinkSurface(indexHtml, `/writing/${slug}`)), 'Review home should link each canonical article once.'],
     [articleSlugs.every((slug) => writingHtml.includes(`/writing/${slug}`)), 'Review Writing index should link all canonical articles.'],
-    [careerCopilotHtml.includes('/writing/trusted-ingress-before-more-tools') && careerCopilotHtml.includes('/writing/fail-closed-redaction-foundation') && docNeedleHtml.includes('/writing/separate-product-surface-from-benchmark-harnesses'), 'Review project pages should link their canonical related articles.'],
+    [careerCopilotHtml.includes('/writing/trusted-ingress-before-more-tools') && careerCopilotHtml.includes('/writing/reliable-pii-redaction-for-modern-agents') && docNeedleHtml.includes('/writing/separate-product-surface-from-benchmark-harnesses'), 'Review project pages should link their canonical related articles.'],
     [reviewArticlePages.every((page) => readPage(page).includes('Writing · Engineering note')), 'Review article pages should use reader-facing content labels.'],
   );
 } else {

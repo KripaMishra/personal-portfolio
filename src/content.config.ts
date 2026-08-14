@@ -31,7 +31,7 @@ const projectCollection = defineCollection({
       lifecycle: lifecycleSchema,
       stateSince: z.date(),
       currentState: z.string().min(1),
-      problem: z.string().min(1),
+      problem: z.string().min(1).optional(),
       constraints: z.array(z.string().min(1)).default([]),
       approach: z.array(z.string().min(1)).default([]),
       outcomes: z.array(z.string().min(1)).default([]),

@@ -1,14 +1,15 @@
 ---
-title: Reliable PII redaction for modern agents
-summary: mastra-pii is a measured answer to a real gap — six redaction engines lost on Hinglish chat and Indian identifiers, so the shipped layer combines a Presidio service adapter with a fail-closed local fallback.
-deck: Agents leak PII at every boundary. mastra-pii started by measuring the data — Hinglish chat and Indian identifiers that off-the-shelf redactors miss — then built a fail-closed processor layer around what the benchmarks proved.
+title: Drop-in PII redaction for Mastra agents
+summary: mastra-pii is an adapter, not a detector — one interface over a Presidio deployment (the package owns integration, the deployment owns intelligence), shipping on npm as @kripamishra/mastra-pii with a deterministic Indian-recognizer layer and fail-closed defaults.
+deck: Agent loops touch sensitive text at every boundary — prompts, tool calls, traces, memory. The hard part is not detection; it is integration.
 visibility: public
 publicationStatus: review-draft
 publishedAt: 2026-08-12
+updatedAt: 2026-08-14
 topics:
   - pii-redaction
   - agent-systems
-  - benchmarking
+  - mastra
   - fail-closed
   - privacy-engineering
 relatedProjects:
@@ -25,171 +26,90 @@ evidenceLinks:
     url: https://raw.githubusercontent.com/KripaMishra/mastra-pii/main/README.md
     kind: docs
 sourceEvidenceNotes:
-  - All benchmark tables live in docs/evaluation/benchmark-results.md in the repository; every corpus message is a synthetic fixture.
+  - All examples come from the README (Usage and Query samples); every sample is a synthetic fixture.
   - The npm package page shows 0.2.0-alpha.4 as the current alpha release.
 disclosureCaveats:
   - Synthetic examples only; no real identifiers, traces, or user text.
-  - No claims of perfect recall; every benchmark number matches the published evaluation tables or is qualitative.
+  - Accuracy is a property of the deployed analyzer, not of this package; the article makes no engine-accuracy claims.
+  - No implemented local NER, telemetry, restoration, or structured-document redaction; ner and model layer requests are rejected.
   - The anti-overfitting corpus is local-only and is not linked as a repository file.
-  - No implemented local NER, telemetry, restoration, or structured-document redaction.
 ---
 
-## The problem: agents are chatty, and leaky
+Agents are chatty at exactly the boundaries that matter: user prompts, tool arguments and results, traces, logs, memory. Every one of those surfaces can carry PII, and every one is a place a redaction layer either covers — or silently doesn't.
 
-An agent loop moves sensitive text through a lot of surfaces: user prompts, tool inputs and outputs, traces, logs, memory. A redaction layer earns its keep at the *processor boundary* — the exact text that crosses into the model — and it has to catch values everywhere, not just in the friendly happy-path prompt.
+The surprising part is that the hard problem is not detection. It is integration. Detection is a deployment concern — which model, which recognizers, how it's tuned — and a good deployment team owns it. Integration is a package concern: three Mastra hooks, one `redactText` call, zero custom wiring. **mastra-pii is an adapter, not a detector** — the package owns the integration; the deployment owns the intelligence.
 
-The consumer for this package is an agent application whose users write **Hinglish** — Hindi code-mixed with English — and share **Indian identifiers**: Aadhaar numbers, PANs, UPI handles, IFSC codes, bank accounts. This is precisely the data Western redaction libraries ignore. They optimize for English prose and US formats. Nobody optimized for a Hinglish name inside a chat line, or for an Aadhaar number that must pass the real Verhoeff checksum to be believed.
+## One interface, deployment-configured intelligence
 
-Two properties matter for a layer like this: **coverage of the actual data**, and **fail-closed behavior** — when detection can't be trusted, the system must refuse to pass text through rather than silently hope it's clean.
+The adapter talks to a deployed Presidio analyzer — stock container, spaCy NER out of the box. Adding a model layer or custom recognizers is a deployment-side decision: the package neither gates nor configures those layers, it talks to whatever the deployment provides. Swap deployments and application code does not change.
 
-## The incumbent failed — measured
+What ships inside the package is the **deterministic layer**: Indian regex recognizers (`INDIAN_DEFAULTS`), client-side checksums (Verhoeff for Aadhaar, Luhn for cards), a curated entity allowlist, and shape post-filters — sent to the deployment as per-request `ad_hoc_recognizers`, and runnable standalone with no deployment at all. An agent application whose users write Hinglish and share Indian identifiers gets that layer's coverage on day one — before any NER is involved.
 
-The first engine was a regex-only redactor with a large pattern library. On 20 short synthetic chat messages it scored **30.8% typed recall with 27 false positives** — a security guard who frisks everyone except the person holding the contraband. It mangled Hinglish names: *"Name is Kriya Shankar"* was flagged as a name while *"Mishra"* walked right past it. And its typed coverage of Indian identifiers was zero across the board: Aadhaar 0/3, PAN 0/3, UPI 0/1, IFSC 0/1, bank accounts 0/2.
-
-That is not a bug report; it is the starting condition. Rather than assume a fix, the next step was to freeze a corpus and measure every candidate properly.
-
-## Every packaged library lost
-
-One frozen corpus — 20 chat messages, 39 true PII spans, 19 types. Six engines, span-level metrics, everything actually run rather than desk-checked. The typed-recall picture:
-
-<svg viewBox="0 0 660 240" role="img" aria-label="Typed recall on the v1 corpus: Piiranha 17.9%, anonymizerts plus bert 23.1%, anonymizerts 23.1%, redactpii 30.8%, openredaction 30.8%, in-house prototype 69.2%" font-family="var(--font-sans)" font-size="12.5">
-  <title>Typed recall on the v1 corpus, six engines</title>
-  <text x="232" y="38" text-anchor="end" fill="var(--color-text-muted)">Piiranha ONNX (q8)</text>
-  <rect x="240" y="30" width="81" height="16" rx="2" fill="var(--color-border-strong)"/>
-  <text x="329" y="42" fill="var(--color-text)">17.9%</text>
-  <text x="232" y="72" text-anchor="end" fill="var(--color-text-muted)">anonymizerts + bert-base-NER</text>
-  <rect x="240" y="64" width="104" height="16" rx="2" fill="var(--color-border-strong)"/>
-  <text x="352" y="76" fill="var(--color-text)">23.1%</text>
-  <text x="232" y="106" text-anchor="end" fill="var(--color-text-muted)">anonymizerts (patterns)</text>
-  <rect x="240" y="98" width="104" height="16" rx="2" fill="var(--color-border-strong)"/>
-  <text x="352" y="110" fill="var(--color-text)">23.1%</text>
-  <text x="232" y="140" text-anchor="end" fill="var(--color-text-muted)">@redactpii/node*</text>
-  <rect x="240" y="132" width="139" height="16" rx="2" fill="var(--color-border-strong)"/>
-  <text x="387" y="144" fill="var(--color-text)">30.8%</text>
-  <text x="232" y="174" text-anchor="end" fill="var(--color-text-muted)">openredaction lite (incumbent)</text>
-  <rect x="240" y="166" width="139" height="16" rx="2" fill="var(--color-border-strong)"/>
-  <text x="387" y="178" fill="var(--color-text)">30.8%</text>
-  <text x="232" y="208" text-anchor="end" fill="var(--color-text)">in-house prototype (17 regexes + Verhoeff)</text>
-  <rect x="240" y="200" width="312" height="16" rx="2" fill="var(--color-accent)"/>
-  <text x="560" y="212" fill="var(--color-accent)">69.2%</text>
-</svg>
-
-\* redactpii has no span API, so it was measured by value-stripping — and its NAME rule strips legitimate text like PAN halves and "ASAP". Treat its 30.8% as an upper bound.
-
-The rest of the metrics tell the same story:
-
-| Engine | Typed recall | False positives | Fully-correct | Latency (corpus) |
-|---|---|---|---|---|
-| openredaction lite (incumbent) | 30.8% | 27 | 2/20 | 123 ms |
-| @redactpii/node | 30.8%* | 0* | 2/20* | 1 ms |
-| anonymizerts (patterns) | 23.1% | 1 | 2/20 | 1 ms |
-| anonymizerts + bert-base-NER | 23.1% | 10 | 2/20 | ~500 ms |
-| **in-house prototype** | **69.2%** | **2** | **8/20** | **2 ms** |
-| Piiranha ONNX (q8) | 17.9% | 2 | 0/20 | ~380 ms |
-
-Two results shaped the project. Piiranha, the strongest on-device PII NER we could find, caught only 2 of 6 Hinglish names and is licensed **CC-BY-NC-ND-4.0** — the license says *read it, don't use it*, so the best model was a spectator. And a ~120-line recognizer set we threw together — 17 regexes plus a Verhoeff checksum validator, zero dependencies, 2 ms for the whole corpus — beat every library on the market. Its report card:
-
-| Entity | Result |
-|---|---|
-| PAN, UPI, IFSC, VOTER_ID, CARD, EXPIRY, CVV, SECRET, PASSPORT, DOB, EMAIL, IP, VEHICLE, DL | caught completely — **15 of 19 types at 100%** |
-| BANK_ACC | 2/2 — the checksum correctly refused to call a 12-digit bank number an Aadhaar |
-| AADHAAR | 1/3 — the 2 misses are AI-generated fakes that fail the *real* Verhoeff checksum. Working as designed |
-| PHONE | 5/8 — the 3 misses are deliberate traps (digits spoken aloud, a letter-O, a number split across a sentence) |
-| NAME | **0/6** — regexes cannot find names. This number will matter later |
-
-## The honesty beat: did we overfit?
-
-A high score on a hand-built corpus proves little — the corpus might just be a mirror. So we built a second one whose only job was to embarrass our engine: 20 transcripts, 29 true spans, and 20 false-positive traps — GSTINs, character-spaced PANs, leet speak, JWTs, MAC addresses, hardware serials, `[at]`-obfuscated emails.
-
-It worked. Our engine collapsed to **10.3%**.
-
-| Engine | Recall v1 → v3 | FP (v3) | Traps hit |
-|---|---|---|---|
-| openredaction | 30.8% → **3.4%** | 47 | 9/20 |
-| @redactpii/node | 30.8% → 20.7% | 0* | 0/20 |
-| anonymizerts (+bert) | 23.1% → 3.4% | 3–12 | 6/20 |
-| **in-house prototype** | 69.2% → **10.3%** | 3 | 5/20 |
-| Piiranha ONNX | 17.9% → 3.4% | 4 | 5/20 |
-
-But the decomposition matters more than the collapse. Of the 29 spans, **15 are types the engine never had** — 10 names, plus GSTIN, a 16-digit Aadhaar VID, SWIFT/BIC, and two government IDs. No recognizer, no recall. Of the remaining known-type spans, every one except two is an obfuscation variant — and the two clean-format samples (a UPI handle, a date of birth) both hit. That is not classic overfitting. It is the honest ceiling of regex-only detection, and every packaged engine hit the same wall much harder: openredaction fell to 3.4% while racking up **47 false positives across 9 traps**.
-
-Two design requirements fell out: names in Hinglish need NER, and obfuscated formats need canonicalization.
-
-## The pivot: gate-first around one unmeasured number
-
-The architecture that emerged was a TypeScript wrapper around a **deployed Presidio container** — Presidio's analyzer service, fed the corpus's recognizers as `ad_hoc_recognizers`, with checksum and shape post-filters on the client side. The honest framing at the time: this was low-risk plumbing around **one unmeasured number** — Presidio's typed recall on Hinglish chat. No packaged NER had proven itself on this data (Piiranha: 2/6 names; bert-base-NER: 0/6). So we ran the experiment before paying for the build: deploy the container, run both corpora through the adapter, publish the tables. The gate: ≥60% typed recall on v1, ≤5 false positives, p95 latency under 300 ms.
-
-| Engine (v1 corpus) | Typed recall | FP | Fully-correct | p95 latency |
-|---|---|---|---|---|
-| local (in-house fallback) | 69.2% | 2 | 7/20 | 2 ms |
-| presidio_default (stock) | 35.9% | 0 | 3/20 | 18 ms |
-| **presidio_indian (+17 ad_hoc recognizers)** | **84.6%** | **2** | **9/20** | **16 ms** |
-
-The gate passed on all three measures. spaCy caught **6/6 Hinglish names** — the entire recall delta over regex-only — and the checksum post-filters kept the same discipline as the local engine: the two synthetic Aadhaar fakes were still rejected by the real Verhoeff validator. The in-house engine was kept, not wasted: it became the **local fallback adapter**, the default whenever the service is unreachable.
-
-The spike also produced the findings the adapter is built around:
-
-- **spaCy is confident about everything.** Real names and Hinglish filler ("bhai", "kar") both score 0.85 — no threshold separates them, so we removed the dial and kept the shape: a capital-initial multi-token filter keeps the names and drops the filler.
-- **LOCATION was dropped.** Zero true hits in the whole corpus, and the model hallucinated the literal word "IFSC". ADDRESS is a documented gap.
-- **Luhn lenient, Verhoeff strict.** AI-generated test cards fail real checksums — strict Luhn would delete the only true card. Verhoeff strict drops exactly the synthetic Aadhaars, which is the point.
-- **Overlaps dedupe by type tier, not score.** Structurally strong Indian IDs must outrank generic types — otherwise PHONE_NUMBER swallows a UPI handle on a pure score comparison.
-
-## An extension of Mastra's processor pipeline
-
-The shipped surface is one interface with two implementations — `RemotePresidioAdapter` and `LocalFallbackAdapter` — and the object it returns to the agent loop is a Mastra processor. mastra-pii does not wrap an agent; it extends Mastra's own processor system. The returned `processor` implements Mastra's `Processor` interface, so enabling the layer is a two-line change to the `Agent` constructor and nothing else in the agent code changes:
+## Drop-in Mastra usage
 
 ```ts
+import { Agent } from '@mastra/core/agent';
+import { createLayeredPii } from '@kripamishra/mastra-pii';
+
 const pii = createLayeredPii({
   presidio: { url: process.env.PRESIDIO_URL ?? 'http://localhost:3000' },
-  fallback: 'local', // default; 'strict' → [REDACTION_FAILED] instead of falling back
+  fallback: 'local',             // degrade to the deterministic engine on outage
+  cacheSize: 256,                // per-text LRU; 0 disables
+  anonymize: { format: 'type' }, // 'type' → [PAN_1], 'uniform' → [REDACTED]
 });
 
-await pii.redactText('Aadhaar 7316 7253 5875, PAN ABCDE1234F');
-// "Aadhaar [AADHAAR_1], PAN [PAN_1]"
+await pii.warmup(); // health-checks the remote service (no-op for local)
 
 const agent = new Agent({
-  inputProcessors: [pii.processor],   // user input and every prompt
+  inputProcessors: [pii.processor],   // user input + every prompt
   outputProcessors: [pii.processor],  // assistant output
 });
 ```
 
-The processor hooks three phases of the loop:
+The processor hooks three phases of the loop: `processInput` (user input), `processLLMRequest` (the final prompt before **every** model call, including tool continuations — each tool round-trip re-enters the boundary), and `processOutputResult` (assistant output). Provider-generated structural identifiers — tool call IDs, tool names, approval IDs — are copied verbatim because they are not user content, and redacting them would break tool calls. Placeholders stay type-tagged (`[PAN_1]`, `[NAME_1]`) so the message keeps its structure with the values gone.
 
-- `processInput` — the initial user and system messages, before anything reaches the model
-- `processLLMRequest` — the final prompt before **every** LLM call, including tool continuations, since each tool round-trip re-enters the boundary
-- `processOutputResult` — the assistant's output message
+## The deterministic layer, in two curls
 
-In, out, and every model call in between: redaction is automatic and in-loop, with no agent-prompt changes and no manual calls. The processor copies caller-owned values and redacts recursively through tool arguments, results, errors, and raw input fields. Provider-generated structural identifiers — tool call IDs, tool names, approval IDs — are copied verbatim: they are not user content, and redacting them would break every Gemini/Vertex tool call. Placeholders are type-tagged (`[PAN_1]`, `[PHONE_1]`) so the LLM keeps message structure while the values are gone.
+The test console exposes the same engine over `POST /api/redact`. Baseline first — Indian identifiers, local engine, no deployment required:
 
-## Fail-closed is a product contract, not an error path
-
-- analyzer outage → local fallback by default, or `[REDACTION_FAILED]` in strict mode
-- malformed or unsupported structured data → the containing part is replaced with the marker
-- custom patterns run in **terminable worker sandboxes**: catastrophic-backtracking regexes are rejected (`(a+)+$` → 400) and zero-width matches are rejected
-- checksum and boundary post-filters run client-side — the container is never trusted to validate on its own
-- public output contains only redacted text or the marker — detector values, raw matches, and reversible maps never leave the package
-
-Equally important is what it *refuses*. NER and model-layer requests throw `LayerUnavailableError`. There is no restoration, no telemetry, no structured-document redaction. Redaction is one-way by design — think shredder, not white-out. The honest-limits list is part of the API contract, not an apology.
-
-The engine difference is visible on the data that motivated the project:
-
-```
-bhai new joiner ka Aadhar verify kar lo -> 4829 1048 5920. Name is Kripa Shankar Mishra
-
-local:     no redaction            (the number fails Verhoeff; no NER for names)
-presidio:  bhai new joiner ka Aadhar verify kar lo -> 4829 1048 5920. Name is Kripa [NAME_1]
+```sh
+curl -s -X POST http://localhost:3001/api/redact \
+  -H 'content-type: application/json' \
+  -d '{"text":"Aadhaar 7316 7253 5875, PAN ABCDE1234F, UPI 9999999999@ybl, call 98765 43210"}'
+# → Aadhaar [AADHAAR_1], PAN [PAN_1], UPI [UPI_1], call [PHONE_1]
 ```
 
-## What it still does not do
+Then the case the deterministic layer alone cannot cover — a Hinglish name:
 
-- **Obfuscation defeats every engine.** Leet speak, spaced PANs, `[at]` emails: the best v3 score was 13.8% (Presidio included). Canonicalization is planned, not shipped.
-- **Names in Hinglish need NER**, and only spaCy works (6/6 on the corpus). No tested on-device model covers it.
-- **ADDRESS is a documented gap** — LOCATION was dropped after zero true hits.
-- **The bank-account pattern fires on noise** — timestamps and asset tags look like accounts to it. Context gating is planned.
-- **No restoration**: redaction is lossy and one-way by design.
+```sh
+curl -s -X POST http://localhost:3001/api/redact \
+  -H 'content-type: application/json' \
+  -d '{"text":"bhai new joiner ka Aadhar verify kar lo -> 4829 1048 5920. Name is Kripa Shankar Mishra"}'
+# → deployment reachable: … Name is Kripa [NAME_1]
+#   (spaCy tags "Shankar Mishra"; the shape filter leaves "bhai" alone)
+# → local engine:        no name redaction — the number fails Verhoeff;
+#   names need the deployment's NER
+```
 
-The open work is [tracked publicly in the issue tracker](https://github.com/KripaMishra/mastra-pii/issues): canonicalization, GSTIN/Aadhaar-VID/SWIFT recognizers, retries with jitter, and an observability layer — an ordered hardening backlog, not a promise list.
+That contrast is the architecture in one exchange: checksums and boundary guards run client-side so the container is never trusted to validate on its own, and names are a deployment capability, not a package promise. Around it, the config surface is per-call: `entities` restricts the emitted set; custom patterns (`name`, regex, `entity`) extend it. The same options apply to standalone `redactText` calls.
+
+## Adapter KPIs
+
+| KPI | Definition |
+|---|---|
+| Config surface | entities, custom patterns, anonymize format, recognizer set — switchable per call, no code changes |
+| Compatibility | drop-in Mastra processor (3 hooks), `redactText` contract, Node ≥22, Mastra ≥1.57 |
+| Behavioral guarantees | fail-closed contract, time-boxed custom regex workers, LRU cache, structured-message walk (tool calls, media, approvals) |
+| Overhead | adapter latency excluding analyzer round-trip; cache hit rate on agent-loop repeats |
+
+## Guarantees
+
+Fail-closed is the default: an analyzer outage degrades to the local deterministic engine — or to `[REDACTION_FAILED]` under `fallback: 'strict'` — and public output contains only redacted text or the marker, never raw PII. Custom regexes run in time-bounded worker sandboxes — catastrophic-backtracking patterns are rejected, not executed. Results are cached per text, so agent-loop repeats are cheap; malformed structured data fails its containing part closed rather than passing it through.
+
+## Roadmap
+
+Recognizer pass-through is the documented extension path — tracked in [#25](https://github.com/KripaMishra/mastra-pii/issues/25): user recognizers (Presidio shape) replace the adapter's recognizer set, and custom patterns (local shape) run in both modes. No new built-in recognizers ship. Built-in recognizer expansion and obfuscation canonicalization are closed as out of scope: leet speak, spaced characters, and `[at]` emails defeat every engine, and that limit is stated in the README, not promised away. The model layer is explicitly **out of scope**: deployment-side, and the subject of a future project that will carry its own evaluation.
 
 ## Bottom line
 
-A PII redaction layer for modern agents earns trust the same way any security boundary does: **measure the data first, build for the failure mode, and refuse to look complete when it is not**. Six packaged engines lost on the corpus that matters; a hundred lines of checksum-aware regex beat them; a gated spike proved the service adapter could do better still; and the shipped package keeps its honest limits in the contract. The [package](https://www.npmjs.com/package/@kripamishra/mastra-pii) and the [full benchmark tables](https://raw.githubusercontent.com/KripaMishra/mastra-pii/main/docs/evaluation/benchmark-results.md) are public — every number above is reproducible from the [repository's evaluation harnesses](https://github.com/KripaMishra/mastra-pii/tree/main/docs/evaluation), and the corpus it all ran on is synthetic, so nothing in this story needed to redact itself.
+An adapter earns its place by disappearing: three hooks, one contract, no integration code — and a hard boundary around what it does not do. The [package](https://www.npmjs.com/package/@kripamishra/mastra-pii) is public on npm with provenance attestation, the [README](https://raw.githubusercontent.com/KripaMishra/mastra-pii/main/README.md) documents the full contract, and the comparison harnesses live in the repo — internal evaluation, where it belongs.

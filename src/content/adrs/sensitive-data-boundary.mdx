@@ -15,7 +15,7 @@ evidenceLinks:
 
 ## Context
 
-Privacy tooling becomes risky when it looks broader than it really is. The public README for mastra-pii explicitly rejects `ner` and `model` layers in Alpha 1 and refuses to claim perfect recall.
+Privacy tooling becomes risky when it looks broader than it really is. mastra-pii rejects `ner` and `model` layer requests outright — the package owns integration, and layer choice belongs to the deployment, not the package.
 
 ## Decision
 
@@ -30,4 +30,4 @@ Those options would expand the trust surface faster than the public evidence can
 
 ## Consequences
 
-The package is easier to explain, integrate, and review. The tradeoff is intentionally narrower coverage, but the public interface remains honest about what it can and cannot guarantee.
+The package is easier to explain, integrate, and review. The tradeoff is intentionally narrower coverage, but the public interface remains honest about what it can and cannot guarantee. The boundary set here became permanent API behavior: the deterministic layer ships in the package and doubles as the outage fallback, while NER is a deployment-side capability the package never gates or configures.
