@@ -22,13 +22,11 @@ const articleSlugs = [
   'trusted-ingress-before-more-tools',
   'reliable-pii-redaction-for-modern-agents',
   'separate-product-surface-from-benchmark-harnesses',
-  'citation-first-rag-needs-an-insufficient-context-path',
 ];
 const projectSlugs = [
   'career-copilot',
   'mastra-pii',
   'docneedle',
-  'cuda-documentation-copilot',
   'ssi-sales-intelligence-agent',
   'scavenger',
 ];
