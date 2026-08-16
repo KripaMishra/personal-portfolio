@@ -1,12 +1,12 @@
 ---
 title: DocNeedle
-summary: Local-first SQLite FTS5 tool for indexing docs, retrieving chunks, and checking stale terminology.
+summary: Local-first SQLite FTS5 CLI for deterministic doc indexing and retrieval — index, search, read, and stale-term check across markdown corpora, zero LLM/API in the retrieval path.
 visibility: public
 featured: true
 order: 3
 lifecycle: iterating
 stateSince: 2026-05-29
-currentState: Public README and v0.2.0 tag document a focused CLI surface while keeping benchmark harnesses explicitly separate from normal user workflows.
+currentState: Public README and v0.2.0 tag document a focused four-command CLI (index, search, read, check) while keeping benchmark harnesses explicitly separate from normal user workflows; "v2" refers to the retrieval-generalization baseline, not product version 2.0.
 problem: Documentation tools lose credibility when their everyday product surface and repo-specific evaluation harnesses are presented as the same thing.
 constraints:
   - Keep benchmark discussion qualitative until linked public reports exist.
@@ -56,32 +56,54 @@ decisionSlots: []
 
 ## Context
 
-DocNeedle is the most portfolio-ready repository in the current evidence set because the README clearly explains what the tool does today and what is still author-environment infrastructure.
+DocNeedle is a local-first, deterministic tool for finding — and eventually patching — small facts across large markdown documentation corpora, without loading the haystack into an LLM. It is the most portfolio-ready repo in the evidence set because the README is explicit about what works today and what is still author-environment infrastructure.
 
 ## Problem
 
-Developer tools often blur stable commands, internal experiments, and benchmarking machinery into one narrative. That forces readers to guess what is actually safe to use.
+Two problems, one tool:
 
-## Constraints
+1. **Working with fast-changing docs is expensive.** Docs live across PRDs, DRDs, TRDs, implementation plans, and decision logs. Finding one small fact usually means whole-file reads (token-heavy) or `rg` + manual follow-up (structure-less noise). The thesis: deterministic indexes for the haystack, LLM tokens only for the final candidate sections.
+2. **Tool stories blur product and machinery.** Stable commands, internal experiments, and benchmark harnesses get folded into one narrative, forcing readers to guess what is actually safe to use.
 
-This case study does not publish benchmark numbers or treat hidden scripts as productized features. It keeps the story close to the documented CLI.
+DocNeedle is deliberately *not* "RAG for docs" — no cloud vector DB, no LLM memory system, no full-doc loading by default.
 
 ## Approach
 
-The public workflow is deliberately small: index a markdown corpus, search ranked chunks, read a chunk, and check for stale or conflicting terminology. The README also labels benchmark scripts as repo-specific and asks readers to patch hardcoded paths before reuse.
+A deliberately small, documented CLI surface (`python -m docneedle.cli ...`):
+
+| Command | What it does | Notable flags |
+|---|---|---|
+| `index` | Parse a markdown corpus root and write chunk/file metadata into SQLite | `--changed-only` incremental refresh, `--json` |
+| `search` | Retrieve ranked chunk candidates for a query | `--query`, `--limit`, `--feature` filter, `--json` |
+| `read` | Fetch one chunk payload by `chunk_id` | `--chunk-id`, `--json` |
+| `check` | Scan for stale/conflicting phrases for a topic | `--topic`, `--terms`, `--json` |
+
+How it is implemented:
+
+- **Deterministic chunking** — markdown is split into chunks that carry hashes and line ranges, so re-indexing and patch targeting stay stable across runs; parser-version invalidation drops stale chunks when the parser changes.
+- **SQLite + FTS5 storage** — `files` and `chunks` tables plus an FTS5 virtual table (`porter unicode61` tokenizer) with per-column BM25 weights.
+- **Explainable ranking** — FTS5 BM25 candidates are re-ranked with explicit score components (lexical score, query-intent classification, metadata hints, project filter), then diversified before returning compact payloads (rank, path, line range, source hash).
+- **Metadata + hierarchy indexing** — document role/status/canonicality is indexed and used during retrieval; a large part of the retrieval gain came from making structure legible, not just from ranking tweaks.
+- **Zero LLM/API in the retrieval path** — indexing and search are fully local and deterministic (Python ≥3.11, no runtime dependencies).
+- **Tested** — 43 tests across indexer, parser, search/ranking, fixture eval, and benchmark verdicting.
 
 ## Evidence
 
-Public evidence includes the README, the repository tree, and the v0.2.0 tag. That is enough for versioned and open-source badges without inflating performance claims.
+Public evidence is the README, the repository tree, and the `v0.2.0` tag on the GitHub repo. The eval design separates three families — a broad dev set (tuning across failure families), an untouched holdout (overfitting detection), and a real-doc benchmark (live corpus) — but numbers stay qualitative until linked public reports exist. Note: *v2* here names the retrieval-generalization phase/baseline, not product version 2.0.
 
 ## Decisions
 
-The case study presents the documented separation directly without inventing an ADR record.
+- **Product surface and benchmark harness stay separate.** Benchmark scripts are repo-specific evaluation tools (hardcoded paths, `rg` baseline) and are explicitly not the normal way to use the tool.
+- No invented ADR record; the separation is presented directly.
 
 ## Outcome / current state
 
-DocNeedle is iterating. It already supports a strong public case study because the product surface and the evaluation harness are separated clearly enough to inspect.
+Working and iterating. The four-command CLI is documented and tagged (`v0.2.0`); deterministic indexing, changed-only refresh, explainable re-ranking, and cross-project stale-term checks are implemented and tested. Known limits are stated openly:
+
+- Patch mechanics are scaffolded but **not exposed as a CLI command** in this MVP slice.
+- Benchmark scripts are still author-environment-oriented and need path cleanup before they become portable.
+- Contrastive-negation queries ("do not use X, prefer Y") are an open current-corpus case.
 
 ## Next
 
-If public benchmark reports are added later, the case study can expand with attributable results while keeping the same core story.
+When public benchmark reports exist, the case study can add attributable results without changing the core story. On the product side: expose patch mechanics behind a documented command, and close the contrastive-negation gap.
