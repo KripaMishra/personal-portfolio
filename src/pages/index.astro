@@ -11,7 +11,7 @@ const projectBySlug = new Map(projects.map((project) => [project.slug, project])
 const featuredProject =
   projectBySlug.get('career-copilot') ?? projects.find((project) => project.data.featured) ?? projects[0];
 const featuredVisual = featuredProject ? getProjectVisual(featuredProject.slug) : undefined;
-const homepageProjects = ['mastra-pii', 'docneedle']
+const homepageProjects = ['mastra-pii', 'docneedle', 'ssi-sales-intelligence-agent']
   .map((slug) => projectBySlug.get(slug))
   .filter((project): project is NonNullable<typeof featuredProject> => Boolean(project));
 const homepageArticles = articles.slice(0, 4);
@@ -64,7 +64,6 @@ const currentFocus = [
           <p class="eyebrow">01 / Selected work</p>
           <h2 id="selected-work-heading">Small surfaces. Serious boundaries.</h2>
         </div>
-        <p class="lead">Projects are ordered by how clearly their documentation supports a public case study—not by invented impact.</p>
       </div>
 
       {featuredProject && featuredVisual && (
@@ -117,7 +116,7 @@ const currentFocus = [
           <p class="eyebrow">03 / Writing</p>
           <h2 id="latest-writing-heading">The note behind the decision.</h2>
         </div>
-        <p class="lead">Each note starts in a public README or accepted ADR and returns to the project that made the question concrete.</p>
+        <p class="lead">Every note came out of a real project decision, and points back to the project it was born in.</p>
       </div>
 
       {homepageArticles.length > 0 ? (

@@ -1,35 +1,56 @@
 ---
 title: Sales Intelligence Agent
-summary: API for cited question answering over structured sales data and business notes.
+summary: FastAPI and LangGraph sales-intelligence API that answers structured and causal questions over a cleaned SQLAlchemy star schema plus business-note retrieval, with citations, semantic caching, async queueing, and golden-set evals.
 visibility: public
 featured: false
 order: 5
 lifecycle: in-development
 stateSince: 2026-08-06
-currentState: Public repository and docs describe a cited QA API over structured sales data and business notes; this portfolio presents that documented architecture without claiming a live deployment.
-problem: Explain the documented API surface without treating a reachable URL as proof of deployment ownership or production use.
+currentState: Public repository and docs describe a cited sales-intelligence API over cleaned structured data and redacted business notes; this portfolio presents the documented architecture, benchmarks, and lessons learned without claiming a live deployment or production adoption.
+problem: Build a sales-intelligence agent that can answer WHAT, WHY, and WHAT_TO_DO questions over messy FMCG sales data and business notes while keeping causal claims tied to evidence and keeping recommendation outputs explicitly under human approval.
 constraints:
   - Do not present a live deployment link or deployed badge.
   - Do not claim business ownership, public-safe data provenance, or production adoption.
-  - Stay tied to the README and the repository documented architecture evidence.
+  - Stay tied to repository evidence in README.md, APPROACH.md, ADRs, data-quality notes, lessons learned, and the benchmark write-up.
+  - Keep value and outcome claims within the documented limits of the sample dataset, especially the synthetic value column and sparse promotions/stockouts coverage.
 approach:
-  - Present the repository as a concise case study with cited-question-answering scope.
-  - Omit the deployed badge and live URL because they are not part of the verified portfolio evidence.
-  - Keep the wording centered on the API surface rather than inferred business outcomes.
+  - Clean and normalize the 8-table sales export into a SQLAlchemy star schema while preserving an audit trail through null-with-flag handling and omitted-row ledgers.
+  - Use a single LangGraph agent with three tools — query_database, search_docs, and describe_database — instead of a multi-agent supervisor.
+  - Route async requests through QStash and Upstash, layer a Redis semantic cache on repeated questions, and validate outputs against explicit response contracts plus a 14-question golden set.
 outcomes:
-  - Public-safe record of the documented API architecture without a deployment claim.
+  - Public-safe case study for an evidence-first agent architecture without a deployment claim.
+  - Documented benchmark result that kept deepseek-v4-flash as the default after it beat kimi-k2.6 on both pass rate and wall time over the 14-question golden set.
+  - Consolidated verification surface with 98 passing tests and a reproducible data-quality narrative anchored to repository docs.
 domains:
   - ai-assistants
   - structured-data
   - api-design
+  - analytics-systems
+  - evaluation
 tags:
   - fastapi
-  - citations
+  - langgraph
+  - sqlalchemy
+  - chromadb
+  - redis
   - qstash
+  - citations
+  - evals
 techStack:
   - Python
   - FastAPI
-  - SQL
+  - LangGraph
+  - SQLAlchemy
+  - SQLite
+  - PostgreSQL
+  - ChromaDB
+  - Gemini embeddings
+  - Redis
+  - Upstash Redis
+  - QStash
+  - deepseek-v4-flash
+  - Langfuse
+  - Golden-set evals
 badges:
   - open-source
   - experimental
@@ -45,212 +66,68 @@ adrRefs: []
 challengeRefs: []
 decisionSlots: []
 ---
-*I asked an AI to build a sales-intelligence agent over a messy sample dataset. Then I audited the data, benchmarked the model using the agent it built, and wrote down everything that went wrong. Here's the whole story: the working parts, the embarrassing parts, and the numbers to back both.*
+## Context
 
----
+"Why did SparkClean 1kg sales spike in Mumbai in Sep 2025?"
 
-## TL;DR
+That is the kind of question this agent answers. It turns a messy sample FMCG sales export — 8 CSV tables across 52 weeks, 5 product categories, and 12 territories, plus 30 business-note documents — into a question-answering API. WHAT questions are answered from the structured data; WHY questions must back their causal claims with citations retrieved from the notes.
 
-- **What:** an agent that answers sales questions in plain English, like "Why did SparkClean 1kg spike in Mumbai in September?" It answers with SQL-backed data, citations to source data, a confidence score, and an explicit response status.
-- **Input:** 8 CSV tables (52 weeks, 5 categories, 12 territories) plus 30 unstructured text documents (emails, notes, circulars).
-- **Stack:** FastAPI + LangGraph (single-agent tool loop), a managed queue for async requests, a semantic cache for repeat questions, and a golden-set eval harness. 98 tests.
-- **Origin:** a take-home data-analytics assignment from a company that shall not be named, over a sample FMCG (fast-moving consumer goods) dataset, reworked as a portfolio project. The repo is public: [github.com/KripaMishra/SSI/tree/develop](https://github.com/KripaMishra/SSI/tree/develop).
+## Problem
 
-If you only read one section, read **"The data was the real project"** and **"What went wrong"**. The rest is the good news.
+The hard part was never just wiring an LLM to a database. The system needed to separate three different contracts:
 
----
+- WHAT questions should return factual answers from the structured dataset.
+- WHY questions should return causal analysis only when citations are available.
+- WHAT_TO_DO questions should remain recommendations with `PENDING_APPROVAL`, never decisions presented as fact.
 
-## What it does, in one example
+That contract had to survive bad source data. The cleaning pass found 10,972 mixed-format dates, 9,416 non-numeric sales-value strings, 771 `9999` sentinel volumes, 734 negative-unit rows, 23 duplicate primary-sales pairs, and 12 PII redactions in the unstructured notes. Later audit work also found that the dataset's `value` column is mostly synthetic: 53,849 of 58,262 valid rows match `0.75 × MRP × units` exactly, with another 4,385 within ₹1 rounding.
 
-You type:
+## Approach
 
-```
-Why did SparkClean 1kg sales spike in Mumbai in Sep 2025?
-```
+The architecture follows the repo's accepted decisions:
 
-The agent:
+1. **Clean first, then reason.** The pipeline normalizes dates and value strings, deduplicates rows, redacts PII from business notes, and preserves bad-unit rows via null-with-flag handling, keeping the audit trail inspectable.
+2. **One agent, three tools.** A single LangGraph loop calls `query_database`, `search_docs`, and `describe_database` — no multi-agent supervisor. The repo ADRs make the trade-off explicit: lower latency, less state complexity, fewer moving parts.
+3. **Structured data + retrieval together.** The structured side uses a SQLAlchemy star schema; the unstructured side indexes the 30 business notes in ChromaDB with Gemini embeddings so WHY answers can cite qualitative evidence.
+4. **Serverless-safe async path.** `POST /ask` enqueues via QStash, the signed webhook processes the request, and Upstash-backed Redis stores intermediate and semantic-cache state. `/ask-direct` remains available for synchronous runs.
+5. **Validation as a product boundary.** The agent uses a two-pass output flow and enforces response contracts in code: WHY needs citations, WHAT_TO_DO must stay `PENDING_APPROVAL`, and tool failures map to an explicit error status.
 
-1. Classifies the question as a **WHY** (causal) question.
-2. Decides what it needs: a database query, a search through business notes, or both.
-3. Runs the tools, gathers evidence, and writes an answer.
-4. Returns structured JSON: the answer, **citations** (mandatory for WHY questions), a confidence score, and a status.
+## Tech stack / architecture
 
-Three question types, three contracts:
+- **API layer:** FastAPI endpoints for `/ask`, `/ask-direct`, `/webhook/process`, and cache invalidation.
+- **Agent runtime:** LangGraph single-agent tool loop with `deepseek-v4-flash` as the default model.
+- **Structured analytics layer:** SQLAlchemy over a star schema spanning facts, dimensions, promotions, and stockouts; local SQLite with PostgreSQL as the production target.
+- **Retrieval layer:** ChromaDB vector search over 30 cleaned business-note documents using Gemini embeddings (`gemini-embedding-2`, 1536 dimensions).
+- **Caching:** Redis semantic cache with cosine similarity threshold `0.97` and 600-second TTL.
+- **Async processing:** QStash queue plus signed webhook flow; Upstash Redis for serverless-compatible state.
+- **Observability:** optional Langfuse tracing for LLM calls, chains, and tool invocations.
+- **Evaluation:** 14-question golden set with policy checks, runnable in fake or live mode.
 
-| Type | Meaning | Guarantee |
-|---|---|---|
-| **WHAT** | "What were GlucoJoy's monthly sales vs target in North in Nov 2025?" | Factual answer from the database |
-| **WHY** | "Why did sales spike in Mumbai?" | Causal analysis **with citations**: no citations, no answer |
-| **WHAT_TO_DO** | "Which SKUs should we restock?" | A recommendation, returned with `PENDING_APPROVAL`; the agent can suggest, it cannot decide |
+## Evidence
 
-That last contract is the one I'm proudest of. The agent is explicitly not allowed to give recommendations as fact. It proposes; a human approves. It's a one-line policy check in code. It turns "an AI that talks to your database" into "an AI that respects its own limits."
+The repo ships unusually complete public evidence:
 
----
+- `README.md` documents the architecture, API surface, and tech stack.
+- `APPROACH.md` records the data-cleaning ledger, tool design, queue flow, cache behavior, and major limitations.
+- `docs/adr/README.md` indexes six accepted ADRs covering the agent loop, star schema, QStash choice, semantic cache, PII redaction, and model selection.
+- `docs/DATA_QUALITY.md` deepens the anomaly catalogue, including the synthetic value finding and unresolved edge cases.
+- `docs/LESSONS_LEARNED.md` preserves the failed RQ-first plan and the serverless pivot to QStash/Upstash.
 
-## The data was the real project
+## Evidence boundary
 
-The dataset is a sample FMCG sales export. Sample datasets are supposed to be tidy; this one was not.
+This entry is a repository-backed case study, not proof of a live system:
 
-**Four date formats. In the same column.** `YYYY-MM-DD`, `DD-MM-YYYY`, `MM/DD/YY`, and `DD Mon YYYY`: 10,972 rows affected. Excel-style date formats were involved, and Excel does not apologize.
+- no deployed badge, live URL, or production-adoption claim;
+- no invented business metrics beyond what the repository already documents;
+- no claim that sparse promotions and stockouts coverage explains every sales movement;
+- the synthetic value column is not presented as an independent source of pricing truth.
 
-Then the sales values arrived as strings like `"Rs 1,234"` across 9,416 rows. Someone formatted currency into a numeric column, which is the data-entry equivalent of writing a memo in Comic Sans.
+## Outcomes
 
-And then there was **9999**. The number 9999 is not a sales figure. It is a sentinel, a placeholder meaning "unknown", and it appeared 771 times in the units column. Another 734 rows had negative units. Probably returns, possibly errors. The dataset has no returns dimension, so I treated them as errors. One row had -9999, which is 9999's sadder cousin.
+The reconciliation and audit trail preserve 38,630,596 validated units across 52 weeks: problematic rows are kept annotated, not deleted. The eval harness turned model choice into a measurement: the 14-question golden set kept `deepseek-v4-flash` over `kimi-k2.6` on both pass rate and wall time. The hardening pass expanded verification from 70 to 98 passing tests and added benchmark, ADR, and data-quality docs.
 
-The main cleaning ledger (primary-sales rows and business notes):
+Read this as an in-development, public-safe architecture case study — evidence-backed, but not proof of a live customer deployment, production adoption, or business ownership.
 
-| Problem | Rows | Fix |
-|---|---|---|
-| 4 date formats | 10,972 | Normalized to one format |
-| Comma-formatted value strings (e.g. `"Rs 1,234"`) | 9,416 | Extracted the number |
-| 9999 sentinel | 771 | → NULL, flagged |
-| Negative units | 734 | → NULL, flagged |
-| -9999 sentinel | 1 | → NULL, flagged |
-| Duplicate rows | 23 pairs | Kept first, rest → `omitted/` |
-| PII in business notes | 12 (4 names, 4 emails, 4 phones) | Redacted to `<REDACTED_*>` |
+## Next
 
-### Don't delete. Annotate
-
-The design decision I'd defend in a meeting: **nulled rows are not deleted.** Every bad unit value is replaced with NULL *and* tagged with a flag (`sentinel_9999`, `negative`, `ok`). The agent's system prompt tells it to use these flags to adjust confidence in its analysis.
-
-Why not just delete? Because deleted data can't be audited. The reconciliation report totals **38,630,596 units** across 52 weeks. It is computed from exactly the 60,426 rows flagged `ok`. You can re-check that number any time, because the flagged rows still exist, annotated. Deleting is a one-way door; flagging keeps the audit trail open.
-
-### The bombshell the audit found
-
-The data-quality audit surfaced something the cleaning pass missed. (The audit itself was a GitHub issue, closed with evidence.)
-
-**The `value` column is synthetic.** For 53,849 of the 58,262 rows with a non-null value column, `value = 0.75 × MRP × units`. Exactly, to the decimal. A further 4,385 rows match within one rupee of rounding. Total: **~99.95% of the dataset's value column is a flat 25% discount applied by whoever generated the sample, not a measurement.**
-
-This is not an error. It's a property of the data. But it caps what the agent can honestly conclude. Any question about "realized prices" or "margins" will find the same constant, because there's nothing else there to find. The audit documented it precisely so nobody (including the agent) over-reads the number. There are also 15 rows where value implies ~24× the recorded units. Twelve are consistent with a case being 24 packs (unconfirmed). The rest remain unexplained, because the dataset doesn't say.
-
-A sample dataset that quietly fakes its own numbers is the most valuable lesson the project taught me: **when your data looks too clean, someone cleaned it for you, and they may not have told you how.**
-
----
-
-## How it's built (the parts you'd care about)
-
-Four moving pieces, each with a boring-sounding name and a fun reason to exist:
-
-### 1. The agent: one brain, three tools
-
-The agent is a single LLM in a loop (LangGraph): classify the question → call tools → write the answer → validate. Three tools:
-
-- `query_database`: a query builder over the star schema (the "hub-and-spoke" table layout) for structured data.
-- `search_docs`: vector search over the 30 business notes. Text is turned into coordinates (embeddings) so that similar *meaning* lands nearby, not just similar words.
-- `describe_database`: lets the model inspect the schema itself instead of memorizing it.
-
-I deliberately chose **one agent with tools** over a multi-agent committee. Multi-agent architectures sound impressive and cost tokens. A single agent with a tool loop does the same job with less latency, less state, and fewer moving parts. There's an ADR recording that decision (and five more like it).
-
-The loop has a hard 180-second timeout. Output goes through two passes. First, the model gathers data freely. Then a second call reformats it into a validated JSON contract. Validation is where the three question-type guarantees above are enforced: in code, not in vibes.
-
-### 2. The queue: async by default
-
-`POST /ask` doesn't run the agent inline. It drops the question into **QStash** (a managed queue), which calls a webhook (`/webhook/process`) when it is ready. The webhook checks a signed signature, so only the queue can trigger processing. The server polls for the result and returns it once the webhook completes.
-
-Why bother? Vercel serverless functions (the deployment target) are short-lived. Code runs in bursts on rented machines. There's no always-on server, so there's no always-on worker process. A managed queue is the serverless-native way to do async work. It was also the decision that nearly cost me the project. More on that in "What went wrong".
-
-### 3. The cache: don't pay for the same answer twice
-
-Repeat questions are the norm in sales analytics. So the API caches responses **semantically**. If a new question is 97% similar (cosine ≥ 0.97) to a cached one, you get the stored answer without another model call. Answers live for 10 minutes. A hit refreshes that window. There's also an explicit invalidation endpoint for data updates.
-
-It's the difference between a demo that costs pennies and a demo that costs dollars. The 0.97 threshold is deliberate. It's tight enough that a genuinely different question still gets a fresh answer.
-
-### 4. The evals: a golden set with teeth
-
-The most important piece for trust: **14 golden questions** (5 WHAT, 4 WHY, 3 WHAT_TO_DO, 2 out-of-scope), each with policy checks: did it return the right intent? The right status? Citations on WHY questions? A confidence score?
-
-This is what let me *measure* the model choice instead of guessing (see "What I measured" below). It runs offline against a stub for CI, or live against a real model.
-
----
-
-## What went wrong (the honest part)
-
-The repo documents its failures in detail in `docs/LESSONS_LEARNED.md`. The failures are the most credible part of the project. Here's the short version.
-
-### The plan met reality, and the plan lost
-
-The original plan (a `task_plan.md`): Redis cache + **python-rq** queue + Docker Compose with a worker service. It was a reasonable plan, committed to, and later gitignored.
-
-The problem: the plan never considered the deployment target. The target was **Vercel serverless**, where a long-running RQ worker literally cannot run. The constraint surfaced the moment queue work started:
-
-- Queue dependencies landed with the first QStash commit, not RQ. The `rq` dependency never existed.
-- The swap instruction landed two minutes later: *"swap the redis with upstash instance of redis; swap the rq with QStash."*
-- QStash implementation followed: webhook endpoint, signature verification, signing-key fix.
-
-The plan was dead within two minutes of the work starting. Nothing about the RQ path was ever built. No worker, no compose file. But the cost was real: plan churn, prompt churn, and burned AI credits that were supposed to fund review (see the AI-tooling constraints below).
-
-The lesson is embarrassingly simple and I'll state it plainly: **lock your infrastructure and your deploy target before you write code.** A plan that gets gitignored mid-execution is a plan that's already stale. This is recommendation #1 in the lessons doc, and it cost the most to learn.
-
-### The AI-tooling constraints (a confession)
-
-The project was built with an AI agent, under constraints that are worth being honest about:
-
-- **Retry churn.** The model repeatedly failed at things like putting citations in the wrong field, hardcoding confidence, or bypassing the query layer I built. Six-plus defects, found *one at a time*. Each retry is a full task re-run. The effective cost multiplier was ~2–3× the ideal.
-- **Text-only model.** No image input. Debugging HTML rendering issues meant guess-and-retry instead of *looking at the page*. Screenshots beat prayer.
-- **Token budget.** The queue rework plus retries blew through the allocation. The cheapest-to-fix findings (deploy constraint, review gap) landed as documentation debt instead of being prevented.
-
-None of this is an excuse. It's a measurement. AI-driven development is not free, and its failure modes are process failure modes. Plan against them.
-
-### The review loop that got cut
-
-The queue pivot displaced the review activities (evals, benchmark, docs). They all ended up as follow-up work on Aug 6–12, 2026 instead of part of the build. That gap is exactly where the deploy-constraint bug slipped through. Every subsequent task in the showcase pass ran with a mandatory reviewer pass: worker subagent → reviewer → close with commit references. **Reviewers caught real defects in 4 of 9 tasks** (including a non-ASCII API key crashing the auth compare, a bytes-vs-string bug that would have shipped). Review loops work. Budget them from day one.
-
----
-
-## What I measured (the turnaround)
-
-### The benchmark: the fast tier was neither fast nor accurate
-
-The original assumption in the design doc: the default model (`deepseek-v4-flash`) was "overkill and slower than needed"; a fast-tier model should do. The benchmark set out to prove that. It proved the opposite:
-
-| Model | Pass rate | Wall time (14 questions) |
-|---|---|---|
-| `deepseek-v4-flash` (default) | **13/14 (93%)** | **~9.9 min** |
-| `kimi-k2.6` (fast-tier candidate) | 12/14 (86%) | ~16.4 min |
-
-The "fast" candidate was 66% *slower* and *less* accurate, and it breached the 180-second agent timeout on one question. The default stayed. The assumption was refuted with data. That's the entire point of having a golden set.
-
-Two findings made this benchmark worth it beyond the table:
-
-1. **Both models failed the same question**: a WHAT_TO_DO question where the agent returned a non-`PENDING_APPROVAL` status. Same failure on both models means it's a *spec-level* bug in the prompt, not a model deficiency. That's the difference between debugging your code and swapping models hoping.2. **The benchmark found a doc bug.** `.env.example` documented an env var (`AGENT_MODEL`) that the config code never actually read. The real one was `MODEL_NAME`. Found because the model had to be set to run the benchmark. Documentation that lies is a bug, and measurement finds it.
-
-### The hardening pass: reviewers, ADRs, and a closed loop
-
-After the measurements, the follow-up work (the review loop, arriving fashionably late):
-
-- Data-quality anomalies catalogued with repro steps: 10 newly surfaced classes, several flagged as *not addressed*, because honest documentation includes what you chose not to fix.
-- **Six ADRs**: one-page records of every significant decision (single agent, star schema, QStash, caching, PII redaction, model choice) with alternatives considered. The article-writing practice worth copying: a decision without its reasoning is a future regret.
-- API secured: `X-API-Key` auth with constant-time comparison, webhook exempt (it has its own signature check).
-- Tests consolidated and expanded: **70 → 98 passing**.
-- The project's own benchmark result was applied to the project's own process. Every subagent in the showcase pass was pinned to `deepseek-v4-flash`, the benchmark winner. The agent built the benchmark, the benchmark picked the model, the model built the rest. I find this loop deeply satisfying.
-
----
-
-## Things worth stealing
-
-1. **Lock infra + deploy target before coding.** A gitignored plan is a stale plan.
-2. **Budget a dedicated review loop**, and don't let rework eat it.
-3. **Don't delete data, annotate it.** NULL + flag beats DELETE, because the audit trail survives.
-4. **Eval with a golden set and policy checks**, the same test that caught both a model timeout and a spec-level bug.
-5. **ADRs for AI-made decisions.** When the builder is a stochastic parrot, write the reasoning down while it's still cheap.
-6. **Cap retries and log them.** State what changed, cap at 2, then change strategy. Token waste should be visible and auditable.
-7. **Assume 2–3× the token budget you think you need.** The ideal path (no retries, no rework) is not the realistic one.
-8. **Benchmark before you trust a label.** "Fast tier" was neither. The default was right, and now there's a number saying so.
-
----
-
-## The reading map
-
-Everything is in the repo, public, commit-verified:
-
-- `README.md`: the front door (architecture diagram, API reference, quickstart)
-- `APPROACH.md`: the technical deep-dive and the honest limitations list
-- `ARTEFACT.md`: the reconciliation report (38,630,596 units and how)
-- `docs/DATA_QUALITY.md`: the anomaly catalogue, including the synthetic-value finding
-- `docs/LESSONS_LEARNED.md`: the process post-mortem with commit evidence
-- `docs/MODEL_BENCHMARK.md`: the benchmark, reproducible
-- `docs/adr/`: six decision records
-- `tests/evals/`: the golden set and the eval runner
-- Run it yourself: clone it, `pip install -r requirements.txt`, `uvicorn src.api.main:app`, and ask it about SparkClean.
-
-*A note on honesty: this project began as a take-home assignment from a company. Let's call them He-Who-Must-Not-Be-Named, LLC. The sample lied a little (that synthetic value column), the process stumbled (that queue pivot), and the measurements fixed more than the code did. I've kept all of it, the failures included. A portfolio that only shows the wins is just marketing, and marketing doesn't teach anyone anything.*
+If the public evidence set expands later, the strongest follow-up angles are already clear from the repo: selective cache invalidation, richer promo/stockout evidence for causal answers, and further benchmark/eval work. Until then, the most honest value is the current one: a fully inspectable record of how the system was built, where the data lied, and which engineering decisions held up under measurement.

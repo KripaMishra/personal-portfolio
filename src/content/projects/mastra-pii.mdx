@@ -6,7 +6,7 @@ featured: true
 order: 2
 lifecycle: in-development
 stateSince: 2026-08-09
-currentState: "Live on npm as [v0.2.0-alpha.4](https://www.npmjs.com/package/@kripamishra/mastra-pii) with provenance attestation. One interface, two analyzers: the [RemotePresidioAdapter](https://github.com/KripaMishra/mastra-pii/blob/main/src/analyzer.ts) over a deployed Presidio container (spaCy NER + per-request Indian recognizers) and a zero-dependency deterministic engine that doubles as the outage fallback. Extension path: recognizer pass-through ([#25](https://github.com/KripaMishra/mastra-pii/issues/25)). Remaining P2 hardening in [#19](https://github.com/KripaMishra/mastra-pii/issues/19)."
+currentState: "Live on npm as [v0.2.0](https://www.npmjs.com/package/@kripamishra/mastra-pii) (stable) with provenance attestation. One interface, two analyzers: the [RemotePresidioAdapter](https://github.com/KripaMishra/mastra-pii/blob/main/src/analyzer.ts) over a deployed Presidio container (spaCy NER + per-request Indian recognizers) and a zero-dependency deterministic engine that doubles as the outage fallback. Extension path: recognizer pass-through ([#25](https://github.com/KripaMishra/mastra-pii/issues/25)) — shipped. P2 hardening complete ([#19](https://github.com/KripaMishra/mastra-pii/issues/19)); no open issues."
 constraints:
   - Synthetic examples only; never invent or reproduce real user text.
   - No engine-accuracy claims anywhere; the comparison harnesses in docs/evaluation/ are internal-only.
@@ -74,14 +74,18 @@ An agent loop touches sensitive text at many surfaces — prompts, tool inputs a
 
 ## Roadmap
 
-Built-in recognizer expansion ([#9](https://github.com/KripaMishra/mastra-pii/issues/9)–[#13](https://github.com/KripaMishra/mastra-pii/issues/13)) and obfuscation canonicalization ([#8](https://github.com/KripaMishra/mastra-pii/issues/8)) are **closed as out of scope** (2026-08-14) — detection extensions flow through recognizer pass-through, not new built-ins. The remaining P2 hardening is tracked in the master issue [#19](https://github.com/KripaMishra/mastra-pii/issues/19), ordered for implementation — pick the first open one, top to bottom:
+The P2 hardening backlog ([#19](https://github.com/KripaMishra/mastra-pii/issues/19)) is **complete** (2026-08-14) — every ordered item shipped and the package reached stable `0.2.0` on npm. Built-in recognizer expansion ([#9](https://github.com/KripaMishra/mastra-pii/issues/9)–[#13](https://github.com/KripaMishra/mastra-pii/issues/13)) and obfuscation canonicalization ([#8](https://github.com/KripaMishra/mastra-pii/issues/8)) are **closed as out of scope** — detection extensions flow through recognizer pass-through, not new built-ins.
 
-- [ ] [#14](https://github.com/KripaMishra/mastra-pii/issues/14) — Presidio adapter: retries with jitter + timeout config
-- [ ] [#25](https://github.com/KripaMishra/mastra-pii/issues/25) — Recognizer pass-through: user recognizers (Presidio shape) replace the adapter's recognizer set; custom patterns (local shape) run in both modes — the documented way to add detection
-- [ ] [#16](https://github.com/KripaMishra/mastra-pii/issues/16) — Observability: per-entity redaction counters
-- [ ] [#15](https://github.com/KripaMishra/mastra-pii/issues/15) — Agent-callable redactPII Mastra tool
-- [ ] [#17](https://github.com/KripaMishra/mastra-pii/issues/17) — Structured-document inspection (redact inside JSON/objects)
-- [ ] [#18](https://github.com/KripaMishra/mastra-pii/issues/18) — Mastra compatibility matrix (1.57 → latest 1.x) — final guard
+Resolved (all closed 2026-08-14):
+
+- [x] [#14](https://github.com/KripaMishra/mastra-pii/issues/14) — Presidio adapter: retries with jitter + timeout config
+- [x] [#25](https://github.com/KripaMishra/mastra-pii/issues/25) — Recognizer pass-through: user recognizers (Presidio shape) replace the adapter's recognizer set; custom patterns (local shape) run in both modes — the documented way to add detection
+- [x] [#16](https://github.com/KripaMishra/mastra-pii/issues/16) — Observability: per-entity redaction counters
+- [x] [#15](https://github.com/KripaMishra/mastra-pii/issues/15) — Agent-callable redactPII Mastra tool
+- [x] [#17](https://github.com/KripaMishra/mastra-pii/issues/17) — Structured-document inspection (redact inside JSON/objects)
+- [x] [#18](https://github.com/KripaMishra/mastra-pii/issues/18) — Mastra compatibility matrix (1.57 → latest 1.x) — final guard
+
+The repo currently has **no open issues**.
 
 ## Evidence
 
@@ -93,7 +97,7 @@ The [published ADR](/work/mastra-pii/decisions/sensitive-data-boundary) records 
 
 ## Outcome / current state
 
-The package is live on npm (`0.2.0-alpha.4`, provenance-attested) with 67 passing tests and a clean-consumer verification gate. What it does not do is documented as loudly as what it does:
+The package is live on npm (`0.2.0`, provenance-attested) with 67 passing tests and a clean-consumer verification gate. What it does not do is documented as loudly as what it does:
 
 - Obfuscated formats still defeat every engine — a stated permanent limit, not a backlog item.
 - Names and addresses are NER-only, deployment-side.
@@ -104,4 +108,4 @@ Those limits are scope, not surprises.
 
 ## Next
 
-The hardening backlog (#19) is the ordered plan: retries with jitter, recognizer pass-through, observability, the agent-callable tool, structured-document inspection, and finally the Mastra compatibility matrix. Release cadence bundles pairs per alpha — alpha.5 = #14 + #25, alpha.6 = #16 + #15, alpha.7 = #17 + #18, then stable `0.2.0` once the matrix is green. Every alpha ships through the existing release workflow (trusted publishing, provenance attestation) — no token publishes.
+The hardening backlog (#19) shipped in full and the package is at stable `0.2.0` — the ordered plan (retries with jitter, recognizer pass-through, observability, the agent-callable tool, structured-document inspection, Mastra compatibility matrix) is done, with no open issues remaining. Future work is deployment-side (NER/model layers) or new scope, tracked as new issues.
