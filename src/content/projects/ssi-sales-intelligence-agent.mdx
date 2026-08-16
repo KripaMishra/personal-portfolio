@@ -68,9 +68,9 @@ decisionSlots: []
 ---
 ## Context
 
-Sales Intelligence Agent turns a messy sample FMCG sales export into a question-answering API that can respond to factual, causal, and recommendation-flavored analytics prompts without pretending the source data is cleaner than it is. The repo is strongest not because it claims deployment success, but because it documents the architecture, the limits, the audit trail, and the mistakes.
+"Why did SparkClean 1kg sales spike in Mumbai in Sep 2025?"
 
-The source corpus combines 8 CSV tables across 52 weeks, 5 product categories, and 12 territories with 30 business-note documents. The agent answers questions like "Why did SparkClean 1kg sales spike in Mumbai in Sep 2025?" by combining structured queries with citation-backed retrieval over the notes.
+That is the kind of question this agent answers. It turns a messy sample FMCG sales export — 8 CSV tables across 52 weeks, 5 product categories, and 12 territories, plus 30 business-note documents — into a question-answering API. WHAT questions are answered from the structured data; WHY questions must back their causal claims with citations retrieved from the notes.
 
 ## Problem
 
@@ -80,32 +80,23 @@ The hard part was never just wiring an LLM to a database. The system needed to s
 - WHY questions should return causal analysis only when citations are available.
 - WHAT_TO_DO questions should remain recommendations with `PENDING_APPROVAL`, never decisions presented as fact.
 
-That contract had to survive bad source data. The cleaning pass documented 10,972 mixed-format dates, 9,416 non-numeric sales-value strings, 771 `9999` sentinel volumes, 734 negative-unit rows, 23 duplicate primary-sales pairs, and 12 PII redactions in the unstructured notes. Later audit work also documented that the dataset's `value` column is mostly synthetic: 53,849 of 58,262 valid rows match `0.75 × MRP × units` exactly, with another 4,385 within ₹1 rounding.
-
-## Constraints
-
-This project is documented as a repository-backed case study, not as proof of a live system. The portfolio entry therefore keeps several boundaries explicit:
-
-- no deployed badge, live URL, or production-adoption claim;
-- no invented business metrics beyond what the repository already documents;
-- no claims that sparse promotions and stockouts coverage can explain every sales movement;
-- no presentation of the synthetic value column as an independent source of pricing truth.
+That contract had to survive bad source data. The cleaning pass found 10,972 mixed-format dates, 9,416 non-numeric sales-value strings, 771 `9999` sentinel volumes, 734 negative-unit rows, 23 duplicate primary-sales pairs, and 12 PII redactions in the unstructured notes. Later audit work also found that the dataset's `value` column is mostly synthetic: 53,849 of 58,262 valid rows match `0.75 × MRP × units` exactly, with another 4,385 within ₹1 rounding.
 
 ## Approach
 
-The architecture follows the repo's accepted decisions rather than the flashiest possible stack:
+The architecture follows the repo's accepted decisions:
 
-1. **Clean first, then reason.** The pipeline normalizes dates and value strings, deduplicates rows, redacts PII from business notes, and preserves bad-unit rows via null-with-flag handling instead of deletion so the audit trail stays inspectable.
-2. **One agent, three tools.** A single LangGraph loop calls `query_database`, `search_docs`, and `describe_database` instead of routing through a multi-agent supervisor. The repo ADRs make the trade-off explicit: lower latency, less state complexity, fewer moving parts.
-3. **Structured data + retrieval together.** The structured side uses a SQLAlchemy star schema; the unstructured side indexes the 30 business notes in ChromaDB with Gemini embeddings so WHY answers can cite qualitative evidence instead of inventing causes.
+1. **Clean first, then reason.** The pipeline normalizes dates and value strings, deduplicates rows, redacts PII from business notes, and preserves bad-unit rows via null-with-flag handling, keeping the audit trail inspectable.
+2. **One agent, three tools.** A single LangGraph loop calls `query_database`, `search_docs`, and `describe_database` — no multi-agent supervisor. The repo ADRs make the trade-off explicit: lower latency, less state complexity, fewer moving parts.
+3. **Structured data + retrieval together.** The structured side uses a SQLAlchemy star schema; the unstructured side indexes the 30 business notes in ChromaDB with Gemini embeddings so WHY answers can cite qualitative evidence.
 4. **Serverless-safe async path.** `POST /ask` enqueues via QStash, the signed webhook processes the request, and Upstash-backed Redis stores intermediate and semantic-cache state. `/ask-direct` remains available for synchronous runs.
-5. **Validation as a product boundary.** The agent uses a two-pass output flow and enforces response contracts in code: WHY needs citations, WHAT_TO_DO must stay `PENDING_APPROVAL`, and tool failures map to error status instead of bluffing.
+5. **Validation as a product boundary.** The agent uses a two-pass output flow and enforces response contracts in code: WHY needs citations, WHAT_TO_DO must stay `PENDING_APPROVAL`, and tool failures map to an explicit error status.
 
 ## Tech stack / architecture
 
 - **API layer:** FastAPI endpoints for `/ask`, `/ask-direct`, `/webhook/process`, and cache invalidation.
-- **Agent runtime:** LangGraph single-agent tool loop with `deepseek-v4-flash` as the documented default model.
-- **Structured analytics layer:** SQLAlchemy over a star schema spanning facts, dimensions, promotions, and stockouts; local SQLite with PostgreSQL documented as the production target.
+- **Agent runtime:** LangGraph single-agent tool loop with `deepseek-v4-flash` as the default model.
+- **Structured analytics layer:** SQLAlchemy over a star schema spanning facts, dimensions, promotions, and stockouts; local SQLite with PostgreSQL as the production target.
 - **Retrieval layer:** ChromaDB vector search over 30 cleaned business-note documents using Gemini embeddings (`gemini-embedding-2`, 1536 dimensions).
 - **Caching:** Redis semantic cache with cosine similarity threshold `0.97` and 600-second TTL.
 - **Async processing:** QStash queue plus signed webhook flow; Upstash Redis for serverless-compatible state.
@@ -114,7 +105,7 @@ The architecture follows the repo's accepted decisions rather than the flashiest
 
 ## Evidence
 
-The repo ships unusually complete public evidence for a portfolio case study:
+The repo ships unusually complete public evidence:
 
 - `README.md` documents the architecture, API surface, and tech stack.
 - `APPROACH.md` records the data-cleaning ledger, tool design, queue flow, cache behavior, and major limitations.
@@ -122,17 +113,20 @@ The repo ships unusually complete public evidence for a portfolio case study:
 - `docs/DATA_QUALITY.md` deepens the anomaly catalogue, including the synthetic value finding and unresolved edge cases.
 - `docs/LESSONS_LEARNED.md` preserves the failed RQ-first plan and the serverless pivot to QStash/Upstash.
 
+## Evidence boundary
+
+This entry is a repository-backed case study, not proof of a live system:
+
+- no deployed badge, live URL, or production-adoption claim;
+- no invented business metrics beyond what the repository already documents;
+- no claim that sparse promotions and stockouts coverage explains every sales movement;
+- the synthetic value column is not presented as an independent source of pricing truth.
+
 ## Outcomes
 
-The project matters as a documented engineering record more than as a launch claim:
+The reconciliation and audit trail preserve 38,630,596 validated units across 52 weeks: problematic rows are kept annotated, not deleted. The eval harness turned model choice into a measurement: the 14-question golden set kept `deepseek-v4-flash` over `kimi-k2.6` on both pass rate and wall time. The hardening pass expanded verification from 70 to 98 passing tests and added benchmark, ADR, and data-quality docs.
 
-- The reconciliation and audit trail preserve 38,630,596 validated units across 52 weeks by keeping problematic rows annotated instead of deleted.
-- The eval harness turns model choice into a measurable decision instead of an aesthetic one: the 14-question golden set kept `deepseek-v4-flash` as default after it outperformed `kimi-k2.6` on both pass rate and wall time.
-- The hardening pass expanded verification from 70 to 98 passing tests and added benchmark, ADR, and data-quality documentation that makes the system easier to inspect than many larger production-adjacent demos.
-
-## Outcome / current state
-
-Sales Intelligence Agent is still best understood as an in-development, public-safe architecture case study. The repository documents an evidence-backed FastAPI + LangGraph system, but this portfolio entry does not treat that as proof of a live customer deployment, production adoption, or business ownership.
+Read this as an in-development, public-safe architecture case study — evidence-backed, but not proof of a live customer deployment, production adoption, or business ownership.
 
 ## Next
 
