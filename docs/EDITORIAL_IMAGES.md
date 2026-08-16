@@ -48,7 +48,6 @@ Project and article selection lives in `src/lib/visuals.ts`.
 | Career Copilot | `trust-boundary.svg` | trusted request context and ingress |
 | mastra-pii | `redaction-study.svg` | fail-closed redaction |
 | DocNeedle | `retrieval-shelves.svg` | indexed local documentation |
-| CUDA Documentation Copilot | `citation-chain.svg` | answers retaining a path to source |
 | SSI Sales Intelligence Agent | `evidence-ledger.svg` | evidence and publication approval |
 | Scavenger | `routing-plan.svg` | explicit task routing and handoffs |
 | Benchmark-harness article | `approval-desk.svg` | separate product and evaluation review |

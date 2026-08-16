@@ -21,11 +21,6 @@ const projectVisuals: Record<string, EditorialVisual> = {
     alt: 'Architectural shelving geometry representing indexed documentation',
     caption: 'Local retrieval — shelves as navigable document space.',
   },
-  'cuda-documentation-copilot': {
-    src: '/images/editorial/citation-chain.svg',
-    alt: 'Three document planes connected to marked source references',
-    caption: 'Citation-first retrieval — every answer keeps a route back to source.',
-  },
   'ssi-sales-intelligence-agent': {
     src: '/images/editorial/evidence-ledger.svg',
     alt: 'Ruled evidence ledger with completed marks and one separated boundary line',
@@ -46,7 +41,6 @@ const articleVisuals: Record<string, EditorialVisual> = {
     alt: 'Synthetic approval desk with a checked document',
     caption: 'Product surface and evaluation evidence are reviewed as separate artifacts.',
   },
-  'citation-first-rag-needs-an-insufficient-context-path': projectVisuals['cuda-documentation-copilot'],
 };
 
 export const heroVisual: EditorialVisual = {
