@@ -144,7 +144,7 @@ Add one entry to `projectVisuals` in `src/lib/visuals.ts`:
 'new-project-slug': {
   src: '/images/editorial/new-concept.svg',
   alt: 'Concrete description of the visible geometry',
-  caption: 'Engineering meaning — why this symbol belongs to the project.',
+  caption: 'Editorial illustration — <visible geometry>, used for the <Project> case study.',
 },
 ```
 
@@ -159,9 +159,11 @@ Create a separate article entry only when its argument is visually distinct.
 ### 6. Write alt text and caption for different jobs
 
 - **Alt text** describes what is visibly drawn. It should still make sense without knowing the project.
-- **Caption** explains the engineering metaphor and its relationship to the content.
+- **Caption** names the visible subject and the project/page context, per the template in `docs/content-system.md` — no invented interpretation, provenance, or crop metadata.
 
 Do not repeat the title, begin with "image of," or put critical project evidence only in the image. Decorative marks inside the SVG do not need embedded accessibility text because the route's `<img>` supplies the accessible name.
+
+Caption text for every existing asset already follows the template; re-run the template (Section 2 of `docs/content-system.md`) when a visual is reused in a new context.
 
 ## Crop and theme behavior
 

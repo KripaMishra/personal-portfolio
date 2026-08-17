@@ -6,11 +6,12 @@ This document is the stable continuation guide for the personal portfolio. Read 
 
 The runnable portfolio is implemented and verified in both publication stages.
 
-- Review build: 19 generated pages, including four review-draft articles.
-- Production build: 15 generated pages; review drafts are excluded.
+- Review build: 17 generated pages, including three review-draft articles.
+- Production build: 14 generated pages; review drafts are excluded.
 - Responsive matrix: 72 layout checks per stage across six widths and two themes.
 - Theme regression check: the real toggle switches to dark, persists through reload, and activates the expected palette.
 - Latest verified result: lint, Astro check, schema checks, both builds, and both end-to-end suites passed with zero horizontal overflow.
+- No downloadable resume PDF is currently shipped; the Resume page renders the approved timeline copy, and visitor-facing copy follows `docs/content-system.md`.
 
 Do not treat this as publication approval. Review-draft articles and any unresolved disclosure-sensitive claims still require owner approval.
 
@@ -72,7 +73,8 @@ Do not make `unlisted` review-only without first changing the approved contract 
 - Do not commit private absolute paths, vault references, confidential identifiers, real user data, logs, or unsupported screenshots.
 - Keep `sourceEvidenceNotes` public-safe even though article pages do not render the field.
 - Preserve the fail-closed production filter for `review-draft` articles.
-- Do not add a resume PDF, deployment configuration, or SSI ownership/deployment claims without explicit approval.
+- Do not ship a resume PDF or download CTA without owner approval; the canonical resume build stays outside this repository (exact path in internal planning notes only) and never appears in site copy or source.
+- Follow `docs/content-system.md` for all visitor-facing copy and captions.
 - Keep review-only confirmation notes out of production output.
 
 ## Required verification
@@ -97,9 +99,9 @@ PUBLIC_PORTFOLIO_STAGE=review pnpm build
 Expected baseline:
 
 - Astro check: zero errors, warnings, and hints.
-- Content schema: four articles and three experience entries.
-- Review build: 19 pages.
-- Production build: 15 pages.
+- Content schema: three articles and three experience entries.
+- Review build: 17 pages.
+- Production build: 14 pages.
 - End-to-end checks: the real theme toggle persists after reload, plus 72 successful layout checks per stage across both themes with maximum horizontal overflow `0`.
 - Review output: no pending-confirmation queues, internal review labels, or unpublished-decision placeholders.
 - Production output: no review-draft routes, draft references, or private absolute paths.
@@ -108,7 +110,7 @@ Counts may legitimately change when approved content is added. Update assertions
 
 ## Safe continuation workflow
 
-1. Read `README.md`, `docs/content-governance.md`, and `docs/EDITORIAL_IMAGES.md` when the task touches media.
+1. Read `README.md`, `docs/content-governance.md`, `docs/content-system.md`, and `docs/EDITORIAL_IMAGES.md` when the task touches media or copy.
 2. Inspect the exact route, collection, and shared helpers affected by the task.
 3. Reuse existing components, tokens, and visual mappings before adding abstractions.
 4. Make the smallest coherent change.
@@ -125,3 +127,4 @@ Do not commit local planning packs, `.pi-subagents/` output, QA captures, tempor
 - Promote review-draft articles only after owner and disclosure review.
 - Confirm any new employer, ownership, metric, or deployment claims before publication.
 - Add deployment instructions only after a target platform is chosen and verified.
+- Owner decided on 2026-08-18 to hold the resume download: no PDF asset or download CTA ships for now (the earlier as-is approval was superseded); resume copy stays evidence-backed and plain.

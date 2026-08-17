@@ -75,19 +75,3 @@ A single-owner system can keep:
 - one simpler authorization story
 
 That does not make it trivial, but it does make the architecture more legible. For an early product slice, that tradeoff is often the difference between a reliable narrow workflow and a sprawling system with ambiguous responsibility boundaries.
-
-## What this article should not overclaim
-
-This draft should stay disciplined.
-
-It should not imply that the project already supports multi-user deployment, background orchestration, or browser-assisted applications. It should not imply the model has broad autonomous freedom. It should not claim measured outcome improvements, scale, or production adoption from the public sources alone.
-
-A better framing is: this project is a useful example of how to treat ingress, authorization, scoped memory, and durable writes as first-class engineering problems in an agent workflow.
-
-## Why this belongs in the portfolio
-
-The portfolio spec emphasizes evidence, explicit boundaries, and readable technical depth. This draft supports that direction because it turns a public README into a concrete architectural lesson:
-
-Before expanding what an agent can do, make the trust boundary explicit.
-
-That is a more durable engineering insight than a feature tour. It also pairs well with a future case study, where the project page can cover the broader system while this article focuses on one narrow lesson: trusted ingress is part of the product surface.

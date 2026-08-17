@@ -34,7 +34,7 @@ PUBLIC_PORTFOLIO_STAGE=production pnpm build
 
 Development defaults to the review stage. Production deployment must set the stage explicitly.
 
-Visibility and publication rules are documented in [`docs/content-governance.md`](docs/content-governance.md).
+Visibility and publication rules are documented in [`docs/content-governance.md`](docs/content-governance.md). Visitor-facing copy and captions follow [`docs/content-system.md`](docs/content-system.md).
 
 ## Validation
 

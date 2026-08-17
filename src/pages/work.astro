@@ -23,15 +23,14 @@ const lifecycleGroups = [
     <section class="route-lead">
       <div>
         <p class="eyebrow">Work index</p>
-        <h1 class="page-title">Projects with an edge.</h1>
+        <h1 class="page-title">Public project records.</h1>
       </div>
-      <p class="lead">A public index of systems work. Each detail page earns its space through evidence, exclusions, and visible decisions.</p>
+      <p class="lead">For evaluators: browse projects by lifecycle to see what is in development, complete, or archived. Open a project record to inspect its current state, evidence links, and published decisions.</p>
     </section>
 
     <div class="work-rail" aria-label="Public project lifecycle summary">
       <span class="meta">All work · {projects.length}</span>
       {lifecycleGroups.map(([label, count]) => <span>{label} {count}</span>)}
-      <span>Claims scoped to public sources</span>
     </div>
 
     {featured.length > 0 && (
@@ -41,7 +40,6 @@ const lifecycleGroups = [
             <p class="eyebrow">01 / Featured</p>
             <h2 id="featured-projects-heading">Case studies with the clearest evidence path.</h2>
           </div>
-          <p class="lead">These records have enough public documentation to show the problem, boundaries, approach, and current state without filling gaps with atmosphere.</p>
         </div>
         <div class="project-index">
           {featured.map((project) => <ProjectCard project={project} />)}
@@ -53,9 +51,8 @@ const lifecycleGroups = [
       <div class="section-heading section-heading--split">
         <div>
           <p class="eyebrow">02 / Experiments</p>
-          <h2 id="all-projects-heading">Smaller records, narrower claims.</h2>
+          <h2 id="all-projects-heading">Experiments and early-stage work.</h2>
         </div>
-        <p class="lead">Useful public surfaces with thinner evidence stay concise until their documentation supports a deeper case study.</p>
       </div>
       {active.length > 0 ? (
         <div class="project-index">

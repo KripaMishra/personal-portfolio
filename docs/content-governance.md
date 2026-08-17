@@ -4,6 +4,13 @@
 
 This repository stores portfolio content as typed MDX so every public claim can be reviewed in git before it appears on the site.
 
+## Visitor-facing copy contract
+
+Visitor-facing copy must follow [`docs/content-system.md`](content-system.md): every section states its
+audience, value, and action; captions identify subject and context without invented interpretation;
+undefined metaphors, process meta copy, and unbacked metrics are banned. That document is the
+author/reviewer checklist for copy changes.
+
 ## Visibility rules
 
 - `draft`: validates in the repository but never appears in production route generation or indexes.
