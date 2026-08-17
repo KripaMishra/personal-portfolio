@@ -5,6 +5,7 @@ pnpm-debug.log*
 .DS_Store
 docs/*
 !docs/content-governance.md
+!docs/content-system.md
 !docs/AGENT_HANDOVER.md
 !docs/EDITORIAL_IMAGES.md
 .pi-subagents/

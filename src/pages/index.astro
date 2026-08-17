@@ -52,9 +52,8 @@ const currentFocus = [
             loading="eager"
             decoding="sync"
           />
-          <span class="hero-visual__stamp">The work starts before the model: context, evidence, and the edge of the system.</span>
+          <span class="hero-visual__stamp">The record of the work starts before the model: notes, decisions, and evidence.</span>
         </a>
-        <figcaption>{heroVisual.caption} Hero crop 4:5.</figcaption>
       </figure>
     </section>
 
@@ -98,14 +97,15 @@ const currentFocus = [
 
     <section class="editorial-section" aria-labelledby="current-focus-heading">
       <div class="focus-grid">
-        <p class="focus-statement">Reliable AI starts where the happy path ends.</p>
+        <p class="focus-statement">Four areas carry most of this site's agent-systems work.</p>
         <div class="section-heading">
           <p class="eyebrow">02 / Current focus</p>
-          <h2 id="current-focus-heading">Patterns that make agent systems easier to trust, inspect, and improve.</h2>
-          <p class="lead">The work stays centered on product and engineering moves that help people understand the boundary, the fallback, and the evidence path.</p>
+          <h2 id="current-focus-heading">Confirmed in the case studies: bounded context, honest evaluation, privacy-aware workflows, and fallbacks that work.</h2>
+          <p class="lead">Every one of the four areas has at least one project record or ADR behind it on the Work index.</p>
           <ul class="plain-list" aria-label="Current focus areas">
             {currentFocus.map((item) => <li>{item}</li>)}
           </ul>
+          <p class="route-cta__links"><a class="text-link" href="/work">Read the work index →</a></p>
         </div>
       </div>
     </section>
@@ -114,9 +114,9 @@ const currentFocus = [
       <div class="section-heading section-heading--split">
         <div>
           <p class="eyebrow">03 / Writing</p>
-          <h2 id="latest-writing-heading">The note behind the decision.</h2>
+          <h2 id="latest-writing-heading">Writing from real project decisions.</h2>
         </div>
-        <p class="lead">Every note came out of a real project decision, and points back to the project it was born in.</p>
+        <p class="lead">Each essay starts in an existing README or accepted ADR and links back to the project that raised the question — decisions with their evidence, not standalone opinions.</p>
       </div>
 
       {homepageArticles.length > 0 ? (
@@ -131,10 +131,10 @@ const currentFocus = [
     <section class="editorial-section route-cta" aria-labelledby="resume-route-heading">
       <div>
         <p class="eyebrow">04 / Resume</p>
-        <h2 id="resume-route-heading">A timeline, not a claim cloud.</h2>
+        <h2 id="resume-route-heading">A verified experience timeline.</h2>
       </div>
       <div>
-        <p class="lead">Verified experience has its own route. The web timeline is the current resume format.</p>
+        <p class="lead">Roles, dates, and evidence-backed highlights only — no unsupported location or work-mode claims.</p>
         <p class="route-cta__links"><a class="text-link" href="/resume">Open the timeline →</a> <a href="/about">Read the portfolio framing</a></p>
       </div>
     </section>
