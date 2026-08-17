@@ -12,3 +12,6 @@ docs/*
 artifacts/
 .commandcode/
 .pi/subagents/
+findings.md
+progress.md
+task_plan.md
