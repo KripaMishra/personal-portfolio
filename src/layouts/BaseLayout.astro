@@ -43,5 +43,57 @@ const { title, description } = Astro.props;
       <slot />
     </main>
     <Footer />
+    <script is:inline>
+      (() => {
+        const diagrams = document.querySelectorAll('.article-body > svg');
+        if (!diagrams.length) return;
+
+        const dialog = document.createElement('dialog');
+        dialog.className = 'diagram-dialog';
+        dialog.setAttribute('aria-label', 'Expanded diagram');
+
+        const frame = document.createElement('div');
+        frame.className = 'diagram-dialog__frame';
+        const close = document.createElement('button');
+        close.className = 'diagram-dialog__close';
+        close.type = 'button';
+        close.setAttribute('aria-label', 'Close expanded diagram');
+        close.textContent = 'Close';
+        const content = document.createElement('div');
+        content.className = 'diagram-dialog__content';
+
+        close.addEventListener('click', () => dialog.close());
+        dialog.addEventListener('click', (event) => {
+          if (event.target === dialog) dialog.close();
+        });
+        let activeTrigger;
+        dialog.addEventListener('close', () => {
+          if (content.firstElementChild && activeTrigger) {
+            activeTrigger.append(content.firstElementChild);
+            activeTrigger.focus();
+          }
+          activeTrigger = undefined;
+        });
+
+        frame.append(close, content);
+        dialog.append(frame);
+        document.body.append(dialog);
+
+        diagrams.forEach((svg, index) => {
+          const trigger = document.createElement('button');
+          trigger.className = 'diagram__trigger';
+          trigger.type = 'button';
+          trigger.setAttribute('aria-label', `Expand diagram ${index + 1}`);
+          svg.parentNode.insertBefore(trigger, svg);
+          trigger.append(svg);
+          trigger.addEventListener('click', () => {
+            activeTrigger = trigger;
+            content.append(svg);
+            dialog.showModal();
+            close.focus();
+          });
+        });
+      })();
+    </script>
   </body>
 </html>

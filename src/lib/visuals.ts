@@ -35,6 +35,7 @@ const projectVisuals: Record<string, EditorialVisual> = {
 
 const articleVisuals: Record<string, EditorialVisual> = {
   'trusted-ingress-before-more-tools': projectVisuals['career-copilot'],
+  'eval-harness-for-a-user-facing-agent': projectVisuals['career-copilot'],
   'reliable-pii-redaction-for-modern-agents': projectVisuals['mastra-pii'],
   'separate-product-surface-from-benchmark-harnesses': {
     src: '/images/editorial/approval-desk.svg',
