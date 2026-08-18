@@ -10,7 +10,7 @@ const articleFiles = [
   'src/content/articles/trusted-ingress-before-more-tools.mdx',
   'src/content/articles/reliable-pii-redaction-for-modern-agents.mdx',
   'src/content/articles/separate-product-surface-from-benchmark-harnesses.mdx',
-  'src/content/articles/how-we-test-an-ai-agent-that-saves-your-jobs.mdx',
+  'src/content/articles/eval-harness-for-a-user-facing-agent.mdx',
 ];
 
 const experienceFiles = [
