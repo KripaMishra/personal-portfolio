@@ -202,8 +202,24 @@ export const getRelatedAdrs = async (projectId: string) => {
     .sort((left, right) => byDateDesc(left.data.decidedAt, right.data.decidedAt));
 };
 
-export const inlineMarkdownLinks = (text: string): string =>
-  text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" rel="noreferrer" target="_blank">$1</a>');
+export interface InlineLinkPart {
+  type: 'text' | 'link';
+  value: string;
+  href?: string;
+}
+
+export const inlineMarkdownLinkParts = (text: string): InlineLinkPart[] => {
+  const parts: InlineLinkPart[] = [];
+  let index = 0;
+  for (const match of text.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g)) {
+    const matchIndex = match.index ?? 0;
+    if (matchIndex > index) parts.push({ type: 'text', value: text.slice(index, matchIndex) });
+    parts.push({ type: 'link', value: match[1], href: match[2] });
+    index = matchIndex + match[0].length;
+  }
+  if (index < text.length) parts.push({ type: 'text', value: text.slice(index) });
+  return parts;
+};
 
 export const stripMarkdownLinks = (text: string): string => text.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
 

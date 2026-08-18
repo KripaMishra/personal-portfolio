@@ -3,7 +3,7 @@ import type { CollectionEntry } from 'astro:content';
 import { getEntries, render } from 'astro:content';
 import StatusBadge from '../../components/StatusBadge.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { filterIndexVisibleEntries, formatDate, getRelatedAdrs, getRelatedChallenges, getRoutableProjects, inlineMarkdownLinks } from '../../lib/content';
+import { filterIndexVisibleEntries, formatDate, getRelatedAdrs, getRelatedChallenges, getRoutableProjects, inlineMarkdownLinkParts } from '../../lib/content';
 import { getProjectVisual } from '../../lib/visuals';
 import { pageTitle } from '../../site';
 
@@ -47,7 +47,7 @@ const decisionEntryById = new Map(decisionEntries.map((entry) => [entry.id.repla
 
     <div class="detail-grid">
       <article class="prose">
-        <p class="project-current-state"><strong>Current state.</strong> <span set:html={inlineMarkdownLinks(project.data.currentState)} /></p>
+        <p class="project-current-state"><strong>Current state.</strong> <span>{inlineMarkdownLinkParts(project.data.currentState).map((part) => part.type === 'link' ? <a href={part.href} rel="noreferrer" target="_blank">{part.value}</a> : part.value)}</span></p>
         <Content />
       </article>
 
@@ -124,11 +124,6 @@ const decisionEntryById = new Map(decisionEntries.map((entry) => [entry.id.repla
             </ul>
           </section>
         )}
-
-        <section>
-          <h2>Image note</h2>
-          <p class="muted">Custom synthetic study created for this portfolio. No private product interface or user data is shown.</p>
-        </section>
       </aside>
     </div>
   </div>
