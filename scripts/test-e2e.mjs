@@ -111,7 +111,7 @@ const assertions = [
   [!docNeedleHtml.includes('/work/docneedle/decisions/') && docNeedleHtml.includes('No related ADRs.'), 'DocNeedle should omit unpublished decision placeholders.'],
   [aboutHtml.includes('https://github.com/KripaMishra') && aboutHtml.includes('https://www.linkedin.com/in/kripa-mishra/'), 'About should use approved social profiles.'],
   [aboutHtml.includes('GitHub and LinkedIn are the current public contact channels.') && aboutHtml.includes('Resume page'), 'About should render the approved contact channels and point to the Resume page.'],
-  [resumeHtml.includes('TapHealth') && resumeHtml.includes('Present') && !resumeHtml.includes('LangGraph') && !resumeHtml.includes('remote or hybrid'), 'Resume should keep the sourced organization and current role while omitting unsupported details.'],
+  [resumeHtml.includes('TapHealth') && resumeHtml.includes('Present') && resumeHtml.includes('LangGraph') && !resumeHtml.includes('remote or hybrid'), 'Resume should render the sourced roles and approved PDF-aligned details while omitting unsupported work-mode claims.'],
   [ssiHtml.includes('without claiming a live deployment') && !nowHtml.includes('Sales Intelligence Agent'), 'Complete SSI should keep conservative detail-page framing and stay off the Now route.'],
   [pendingUiPhrases.every((phrase) => !renderedSurfaces.includes(phrase)), 'Rendered pages must not expose pending-confirmation or internal review copy.'],
 ];

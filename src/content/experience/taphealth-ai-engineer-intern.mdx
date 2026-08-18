@@ -4,17 +4,17 @@ role: AI Engineer Intern
 start: Aug 2024
 end: Jan 2025
 order: 2
-summary: Worked on the earlier TapHealth health-coach and logging stack, including MCP-based assistant actions, health logging workflows, retrieval, and cache efficiency improvements.
+summary: Built an earlier TapHealth health coach and logging stack with LangGraph, MCP tools, retrieval and reranking, and a cache for repeated health facts.
 transitionNote: Precedes the sourced AI Engineer entry at the same organization from Feb 2025 onward.
 highlights:
-  - Built MCP tools and utility MCP servers for assistant actions, structured response generation, backend workflow execution, and health logging workflows.
-  - Supported glucose, food, exercise, weight, and HbA1c logging plus care-plan-grounded retrieval and resource lookup.
-  - Improved macro-fact cache hit rate from 58% to 93%, framed as a direct cache metric rather than a broad model-call reduction claim.
+  - Built a LangGraph health coach with MCP tools for glucose, food, exercise, weight, and HbA1c logging, plus care-plan and resource lookup with retrieval and reranking.
+  - Built a macro-fact cache to reduce repeated on-demand Gemini generation; raised the hit rate from 58% to 93% and reduced cache-miss Gemini calls by 83%.
 skills:
   - Python
   - FastAPI
+  - LangGraph
   - MCP
-  - Retrieval
+  - Retrieval/Reranking
   - Caching
 relatedProjects: []
 relatedWriting: []
